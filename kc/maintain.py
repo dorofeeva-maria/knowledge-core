@@ -3,7 +3,8 @@
 Links are intra-module only by design — there are no cross-module links.
 """
 import re
-from pathlib import PurePosixPath
+import datetime
+from pathlib import Path, PurePosixPath
 from collections import defaultdict
 
 LINK = re.compile(r"\[\[([^\]|#]*?)\\?(#[^\]|]*)?(\\?\|[^\]]*)?\]\]")
@@ -153,3 +154,34 @@ def lint(root, verbose):
         for r, msg in problems:
             print(f"  {r}: {msg}")
     return len(problems)
+
+
+def compact_log(path, keep):
+    """Mechanical half of log compaction: move all but the last `keep` entries into a
+    sibling .archive file, leaving a marker. The judgment half (rewriting the archived bulk
+    into a compact summary that preserves decisions + current state) is the compact-log skill.
+    """
+    p = Path(path)
+    if not p.exists():
+        print(f"compact-log: {path} not found")
+        return
+    lines = p.read_text(encoding="utf-8").splitlines()
+
+    def is_entry(s):
+        return bool(s.strip()) and not s.lstrip().startswith("#")
+
+    idx = [i for i, s in enumerate(lines) if is_entry(s)]
+    if len(idx) <= keep:
+        print(f"compact-log: {len(idx)} entries ≤ keep={keep} — nothing to do")
+        return
+    header = lines[:idx[0]]
+    entries = [lines[i] for i in idx]
+    old, recent = entries[:-keep], entries[-keep:]
+    today = datetime.date.today().isoformat()
+    archive = p.with_name(p.stem + ".archive" + p.suffix)
+    with archive.open("a", encoding="utf-8") as f:
+        f.write(f"\n<!-- archived {today}: {len(old)} entries -->\n" + "\n".join(old) + "\n")
+    marker = (f"<!-- {len(old)} older entries archived in {archive.name} on {today}; "
+              f"summarize with the compact-log skill, preserving decisions -->")
+    p.write_text("\n".join(header + [marker, ""] + recent) + "\n", encoding="utf-8", newline="\n")
+    print(f"compact-log: archived {len(old)} entries to {archive.name}, kept {len(recent)}")

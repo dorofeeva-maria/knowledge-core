@@ -8,6 +8,7 @@ Module-scoped (run in any module):
   kc index [DIR]              regenerate DIR/index.md
   kc lint  [DIR] [-v]         frontmatter + broken intra-module [[links]] + index freshness
   kc check [DIR]              index + lint -v
+  kc compact-log PATH [--keep N]   archive all but the last N log entries (default 50)
 
 Center-scoped (finds the center via KC_CENTER or by searching upward):
   kc bootstrap [--device-id ID] [--agent NAME]... [--language L] [--yes]   set up this device
@@ -61,6 +62,16 @@ def main(argv):
         root = Path(rest[0]).resolve() if rest else Path.cwd()
         maintain.cmd_index(root)
         maintain.lint(root, True)
+    elif cmd == "compact-log":
+        keep, args, i = 50, [], 0
+        while i < len(rest):
+            if rest[i] == "--keep" and i + 1 < len(rest):
+                keep = int(rest[i + 1]); i += 2
+            else:
+                args.append(rest[i]); i += 1
+        if not args:
+            raise SystemExit("kc compact-log: PATH required")
+        maintain.compact_log(args[0], keep)
     elif cmd == "bootstrap":
         agents = []
         i = 0
