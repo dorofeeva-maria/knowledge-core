@@ -30,6 +30,14 @@ across many sessions.
 - Several parts repeat each other's structure → extract a format-template and make each
   repeated part its own module.
 
+## Creating a module (only when the human agrees)
+When a promotion is accepted, suggest a **template**: read the catalog with `kc templates`,
+match the theme to each entry's `when` hint, and recommend one. The human may **accept** it,
+decline templates entirely (**own rules** — a bare module), or give **their own template
+URL**. Then create it with `kc new-module NAME [--template T | --template-url URL |
+--no-template]`. A chosen template becomes the module's git `upstream` (fork model). Never
+create a module without the human's go-ahead.
+
 ## Retire
 Propose `frozen` (read-only, keep) or `disconnected` (center stops interacting; the repo
 lives on alone) when a module is no longer worked on. The human decides and sets it in the

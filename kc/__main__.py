@@ -13,6 +13,8 @@ Module-scoped (run in any module):
 Center-scoped (finds the center via KC_CENTER or by searching upward):
   kc bootstrap [--device-id ID] [--agent NAME]... [--language L] [--yes]   set up this device
   kc registry                show resolved modules on this device
+  kc templates               list the module-template catalog
+  kc new-module NAME [--template T | --template-url URL | --no-template] [--path P]
   kc pull-all                pull center + present modules (fork model; external = ff)
   kc commit-push [--all] [--push] -m MSG   commit current module (or --all); push only with --push
   kc push-all                push center + present modules that have unpushed commits
@@ -87,6 +89,18 @@ def main(argv):
                       agents=agents or None,
                       language=_opt(rest, "--language"),
                       yes="--yes" in rest)
+    elif cmd == "templates":
+        from . import create
+        create.show_templates(_need_center())
+    elif cmd == "new-module":
+        if not rest or rest[0].startswith("--"):
+            raise SystemExit("kc new-module: NAME required")
+        from . import create
+        create.new_module(_need_center(), rest[0],
+                          template=_opt(rest, "--template"),
+                          template_url=_opt(rest, "--template-url"),
+                          no_template="--no-template" in rest,
+                          path=_opt(rest, "--path"))
     elif cmd == "registry":
         repos.show_registry(_need_center())
     elif cmd == "pull-all":

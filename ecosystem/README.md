@@ -9,6 +9,9 @@ them empty; a center fork fills them on the `working` branch.
 - `candidates.md` — themes/scripts/processes proposed for their own module or tool-package.
 - `log.md` — one line per `close` (date, modules touched, key decisions).
 - `journal.md` — human-readable record of what automatic/agent actions did (auditability).
+- `templates.yml` — catalog of module templates offered when creating a module (name →
+  source + "when" hint). Engine ships defaults; add your own. A module's chosen template is
+  its git `upstream`, not stored in the registry.
 
 Per-device absolute paths are **not** here; they live in the gitignored device overlay
 `devices.local.yml`, created by `bootstrap`.
