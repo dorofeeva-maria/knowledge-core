@@ -1,0 +1,6 @@
+# Instance-level settings — committed in your center fork (working branch).
+# Shared across all your devices. Copy to ../ecosystem/instance.yml when forking.
+
+# Default language for sessions and for writing into modules.
+# A module may override this with its own setting; a session may override via KC_LANGUAGE in .env.
+language: en

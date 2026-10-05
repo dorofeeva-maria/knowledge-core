@@ -1,0 +1,11 @@
+# Per-device / per-session (never committed)
+.env
+/ecosystem/device.*.local.*
+# Python
+__pycache__/
+*.pyc
+# OS / editor
+.DS_Store
+*.swp
+# Local agent settings (per-machine)
+.claude/settings.local.json
