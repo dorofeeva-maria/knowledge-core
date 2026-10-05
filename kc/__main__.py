@@ -10,6 +10,7 @@ Module-scoped (run in any module):
   kc check [DIR]              index + lint -v
 
 Center-scoped (finds the center via KC_CENTER or by searching upward):
+  kc bootstrap [--device-id ID] [--agent NAME]... [--language L] [--yes]   set up this device
   kc registry                show resolved modules on this device
   kc pull-all                pull center + present modules (fork model; external = ff)
   kc commit-push [--all] [--push] -m MSG   commit current module (or --all); push only with --push
@@ -60,6 +61,21 @@ def main(argv):
         root = Path(rest[0]).resolve() if rest else Path.cwd()
         maintain.cmd_index(root)
         maintain.lint(root, True)
+    elif cmd == "bootstrap":
+        agents = []
+        i = 0
+        while i < len(rest):
+            if rest[i] == "--agent" and i + 1 < len(rest):
+                agents.append(rest[i + 1])
+                i += 2
+            else:
+                i += 1
+        from . import bootstrap
+        bootstrap.run(_need_center(),
+                      device_id=_opt(rest, "--device-id"),
+                      agents=agents or None,
+                      language=_opt(rest, "--language"),
+                      yes="--yes" in rest)
     elif cmd == "registry":
         repos.show_registry(_need_center())
     elif cmd == "pull-all":
