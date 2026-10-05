@@ -126,6 +126,26 @@ def commit_push(center, message, all_repos=False, do_push=False):
     return report
 
 
+def push_all(center):
+    targets = [("center", center)]
+    for m in C.resolve(center)[0]:
+        if m["external"] or m["status"] in ("disconnected", "frozen"):
+            continue
+        if m["path"]:
+            targets.append((m["name"], m["path"]))
+    report = []
+    for name, path in targets:
+        if not _is_repo(path):
+            report.append((name, "absent"))
+        elif not _has_remote(path, "origin"):
+            report.append((name, "no origin"))
+        else:
+            r = _git(path, "push")
+            report.append((name, "pushed" if r.returncode == 0 else f"fail: {_last(r.stderr)}"))
+    _print_report(report)
+    return report
+
+
 # ---------------------------------------------------------------- drafts / inbox
 def check_drafts(center):
     def items(name):

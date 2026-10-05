@@ -13,6 +13,7 @@ Center-scoped (finds the center via KC_CENTER or by searching upward):
   kc registry                show resolved modules on this device
   kc pull-all                pull center + present modules (fork model; external = ff)
   kc commit-push [--all] [--push] -m MSG   commit current module (or --all); push only with --push
+  kc push-all                push center + present modules that have unpushed commits
   kc check-drafts            report pending inbox/ and drafts/
   kc ensure-wrappers --agent NAME   regenerate NAME's command wrappers from the canon
   kc add-agent NAME          install an assistant's wrappers + startup stub
@@ -74,6 +75,8 @@ def main(argv):
         if not msg:
             raise SystemExit("kc commit-push: -m MSG required")
         repos.commit_push(_need_center(), msg, all_repos=all_repos, do_push=do_push)
+    elif cmd == "push-all":
+        repos.push_all(_need_center())
     elif cmd == "check-drafts":
         return repos.check_drafts(_need_center())
     elif cmd == "ensure-wrappers":

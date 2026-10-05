@@ -15,10 +15,12 @@ generated from here by `adapters/`.
 
 | Operation | Layer | Where |
 |-----------|-------|-------|
-| close a session (route knowledge, reconcile, commit) | skill | `skills/close.md` *(TBD)* |
-| process inbox / raw drop | skill | `skills/inbox.md` *(TBD)* |
-| emergence (propose module / extraction / split) | skill | `skills/emergence.md` *(TBD)* |
-| index, lint, check | CLI | `kc index|lint|check` |
+| close a session (route knowledge, reconcile, commit, push) | skill | `skills/close.md` |
+| process inbox / raw drop | skill | `skills/inbox.md` |
+| emergence (propose module / extraction / split) | skill | `skills/emergence.md` |
+| index, lint, check | CLI | `kc index\|lint\|check` |
+| registry, pull-all, commit-push, push-all, check-drafts | CLI | `kc <cmd>` |
+| per-AI wrappers | CLI | `kc ensure-wrappers --agent NAME`, `kc add-agent NAME` |
 
 ## Ground rules
 
@@ -26,5 +28,6 @@ generated from here by `adapters/`.
 - Write only within the current module; cross-module moves happen through the center.
 - Propose structural changes (new module, extraction, split) — the human decides.
 - Automatic (no approval): mechanical whitelist only. Content edits are gated.
-
-> Scaffold in progress — skill files and the full ruleset are being added incrementally.
+- Sessions run from the **center**; it may write into modules (except `external` ones,
+  which are limited to their registry `write_zones`). Opening a module alone is standalone
+  mode: follow that module's own rules; ecosystem orchestration is simply absent.
