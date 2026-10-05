@@ -1,0 +1,31 @@
+# Claude Code adapter — how `kc ensure-wrappers --agent claude` renders the canon.
+name: claude
+
+# One thin command-wrapper per skill in skills/. {skill} and {description} are filled in.
+wrapper:
+  path: ".claude/commands/{skill}.md"
+  body: |
+    ---
+    description: {description}
+    ---
+    Run the canonical skill `skills/{skill}.md` in this center. Read it in full and follow
+    it exactly. It is the single source of truth; this file is only a generated pointer.
+
+# Canon entry pointer for Claude.
+pointer:
+  path: "CLAUDE.md"
+  body: |
+    # Center — Claude entry
+
+    Canonical, AI-agnostic instructions are in `AGENTS.md`. Read it first and follow it.
+    Commands under `.claude/commands/` are generated pointers to `skills/` — do not edit by hand.
+
+# Session-start integration: deep-merged into a JSON settings file (idempotent).
+startup:
+  file: ".claude/settings.json"
+  merge_json:
+    hooks:
+      SessionStart:
+        - hooks:
+            - type: command
+              command: "kc ensure-wrappers --agent claude || true ; kc pull-all || true ; kc check-drafts || true"

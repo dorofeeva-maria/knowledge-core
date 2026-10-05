@@ -14,6 +14,8 @@ Center-scoped (finds the center via KC_CENTER or by searching upward):
   kc pull-all                pull center + present modules (fork model; external = ff)
   kc commit-push [--all] [--push] -m MSG   commit current module (or --all); push only with --push
   kc check-drafts            report pending inbox/ and drafts/
+  kc ensure-wrappers --agent NAME   regenerate NAME's command wrappers from the canon
+  kc add-agent NAME          install an assistant's wrappers + startup stub
 
 DIR defaults to the current directory.
 """
@@ -32,6 +34,13 @@ def _need_center():
     if not c:
         raise SystemExit("kc: no center found (set KC_CENTER or run inside one)")
     return c
+
+
+def _opt(rest, flag):
+    if flag in rest:
+        i = rest.index(flag)
+        return rest[i + 1] if i + 1 < len(rest) else None
+    return None
 
 
 def main(argv):
@@ -67,6 +76,17 @@ def main(argv):
         repos.commit_push(_need_center(), msg, all_repos=all_repos, do_push=do_push)
     elif cmd == "check-drafts":
         return repos.check_drafts(_need_center())
+    elif cmd == "ensure-wrappers":
+        agent = _opt(rest, "--agent")
+        if not agent:
+            raise SystemExit("kc ensure-wrappers: --agent NAME required")
+        from . import wrappers
+        wrappers.ensure_wrappers(_need_center(), agent)
+    elif cmd == "add-agent":
+        if not rest:
+            raise SystemExit("kc add-agent: NAME required")
+        from . import wrappers
+        wrappers.add_agent(_need_center(), rest[0])
     else:
         print(__doc__)
         return 1
