@@ -1,11 +1,20 @@
 # Per-device / per-session (never committed)
 .env
-/ecosystem/device.*.local.*
+/ecosystem/devices.local.yml
+
+# Raw drop + session scratch (ignore contents, keep the folders)
+/inbox/*
+!/inbox/README.md
+/drafts/*
+!/drafts/README.md
+
 # Python
 __pycache__/
 *.pyc
+
 # OS / editor
 .DS_Store
 *.swp
+
 # Local agent settings (per-machine)
 .claude/settings.local.json
