@@ -25,7 +25,7 @@ never personal data.
 | `kc/` | the mechanical CLI (`kc`) — deterministic plumbing any agent or hook calls |
 | `skills/` | AI-agnostic markdown instructions for cognitive operations (`close`, …) |
 | `adapters/` | per-AI generators for command wrappers + startup stubs |
-| `adr/` | architecture decision records (Nygard) for the engine itself |
+| `docs/adr/` | architecture decision records (Nygard) for the engine itself |
 | `docs/` | the system canon (architecture, glossary) |
 | `ecosystem/` | center state the fork fills in: registry, HOME map, candidates, log, journal |
 | `config/` | example instance + device configuration |

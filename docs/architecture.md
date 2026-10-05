@@ -114,7 +114,7 @@ Elements emerge from sessions and are analyzed at `close` (see `skills/emergence
 reusable artifact is assessed for extraction into a tool-package *before* it is created; a
 theme is promoted to its own module when it has its own process, goal, mass, or recurrence; a
 module is split when it stops being legible. The engine itself evolves through ADRs
-(`adr/`), written only when a change is proposed back to the engine.
+(`docs/adr/`), written only when a change is proposed back to the engine.
 
 ## Memory
 

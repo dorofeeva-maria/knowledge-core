@@ -14,6 +14,7 @@ Module-scoped (run in any module):
 Center-scoped (finds the center via KC_CENTER or by searching upward):
   kc bootstrap [--device-id ID] [--agent NAME]... [--language L] [--yes]   set up this device
   kc registry                show resolved modules on this device
+  kc home                    regenerate ecosystem/HOME.md (the module map)
   kc templates               list the module-template catalog
   kc new-module NAME [--template T | --template-url URL | --no-template] [--path P]
   kc pull-all                pull center + present modules (fork model; external = ff)
@@ -106,6 +107,8 @@ def main(argv):
                           path=_opt(rest, "--path"))
     elif cmd == "registry":
         repos.show_registry(_need_center())
+    elif cmd == "home":
+        repos.home(_need_center())
     elif cmd == "pull-all":
         repos.pull_all(_need_center())
     elif cmd == "commit-push":

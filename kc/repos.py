@@ -6,6 +6,7 @@ opt-in (`--push`) so nothing leaves the machine without an explicit decision.
 import subprocess
 from pathlib import Path
 from . import center as C
+from . import maintain
 
 
 def _git(path, *args):
@@ -53,6 +54,35 @@ def show_registry(center):
         here = "here" if (m["path"] and m["path"].exists()) else ("absent" if m["path"] else "no-path")
         flags = [m["status"]] + (["external"] if m["external"] else []) + (["private"] if m["private"] else [])
         print(f"  {m['name'].ljust(w)}  {here:7}  {' '.join(flags)}")
+
+
+# ---------------------------------------------------------------- HOME map
+def _module_desc(path):
+    if not path or not Path(path).exists():
+        return ""
+    for fn in ("overview.md", "README.md", "AGENTS.md"):
+        f = Path(path) / fn
+        if f.exists():
+            s = maintain.summary_line(f.read_text(encoding="utf-8", errors="replace"))
+            if s:
+                return s
+    return ""
+
+
+def home(center):
+    mods, _ = C.resolve(center)
+    active = [m for m in mods if m["status"] != "disconnected"]
+    lines = ["<!-- auto-generated map of modules; regenerate with `kc home` -->", "", "# HOME", ""]
+    if not active:
+        lines.append("_No modules yet._")
+    for m in active:
+        flags = ([m["status"]] if m["status"] != "active" else []) \
+            + (["external"] if m["external"] else []) + (["private"] if m["private"] else [])
+        tag = f" _({', '.join(flags)})_" if flags else ""
+        desc = _module_desc(m["path"])
+        lines.append(f"- **{m['name']}**{tag}" + (f" — {desc}" if desc else ""))
+    (center / "ecosystem" / "HOME.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    print(f"home: {len(active)} module(s) mapped")
 
 
 # ---------------------------------------------------------------- pull

@@ -20,6 +20,9 @@ generated from here by `adapters/`.
 | emergence (propose module / extraction / split) | skill | `skills/emergence.md` |
 | index, lint, check | CLI | `kc index\|lint\|check` |
 | registry, pull-all, commit-push, push-all, check-drafts | CLI | `kc <cmd>` |
+| HOME map, compact-log, check-template | CLI | `kc home`, `kc compact-log`, `kc check-template` |
+| create a module / list templates | CLI | `kc new-module`, `kc templates` |
+| set up this device | CLI | `kc bootstrap` |
 | per-AI wrappers | CLI | `kc ensure-wrappers --agent NAME`, `kc add-agent NAME` |
 
 ## Ground rules

@@ -41,7 +41,7 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
 
 4. **Lint & index.** For each module you touched (and the center), run `kc lint <path>` and
    `kc index <path>`; fix broken intra-module links and stale indexes. Regenerate the
-   center's `HOME.md` if the set of modules changed.
+   center's `HOME.md` with `kc home` if the set of modules changed.
 
 5. **Record.** Append one line to `ecosystem/log.md` (date · modules touched · key
    decisions/proposals). Note mechanical/automatic actions in `ecosystem/journal.md` so the
