@@ -62,6 +62,29 @@ def install_launcher(center):
     return launcher, on_path
 
 
+def _git(path, *args):
+    return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True)
+
+
+def _wire_center(center, inst):
+    """Ensure the center fork is on `working` and has its `upstream` (engine) remote.
+    Records an existing upstream URL into instance settings so other devices can re-add it."""
+    if not (center / ".git").exists():
+        return
+    if _git(center, "rev-parse", "--verify", "working").returncode != 0:
+        _git(center, "checkout", "-b", "working")
+    elif _git(center, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() != "working":
+        _git(center, "checkout", "working")
+    remotes = _git(center, "remote").stdout.split()
+    up = inst.get("upstream")
+    if up and "upstream" not in remotes:
+        _git(center, "remote", "add", "upstream", up)
+    elif "upstream" in remotes and not up:
+        url = _git(center, "remote", "get-url", "upstream").stdout.strip()
+        if url:
+            inst["upstream"] = url
+
+
 def run(center, device_id=None, agents=None, language=None, yes=False):
     # 1. instance language -> ecosystem/instance.yml (committed, shared across devices)
     inst_path = center / "ecosystem" / "instance.yml"
@@ -70,7 +93,11 @@ def run(center, device_id=None, agents=None, language=None, yes=False):
         inst["language"] = language
     elif "language" not in inst:
         inst["language"] = _ask("Instance language (e.g. en, ru)", "en", yes) or "en"
+    _wire_center(center, inst)
     _dump_yaml(inst_path, inst)
+    if (center / ".git").exists() and _git(center, "status", "--porcelain", "ecosystem/instance.yml").stdout.strip():
+        _git(center, "add", "ecosystem/instance.yml")
+        _git(center, "commit", "-m", "configure instance (language, upstream)")
 
     # 2. device id -> .env (gitignored, per-device)
     if not device_id:
@@ -104,13 +131,21 @@ def run(center, device_id=None, agents=None, language=None, yes=False):
             paths.pop(name, None)
             continue
         p = _ask(f"  path for '{name}'", str(center.parent / "projects" / name), yes)
-        paths[name] = p
+        dest = Path(p).expanduser()
         remote = m.get("remote")
-        if remote and not Path(p).expanduser().exists():
-            print(f"  cloning {remote} -> {p}")
-            subprocess.run(["git", "clone", remote, str(Path(p).expanduser())])
-            # fork-model branch/upstream wiring is done by `kc new-module`; existing forks
-            # already carry main/working.
+        if not dest.exists():
+            if remote:
+                print(f"  cloning {remote} -> {dest}")
+                rc = subprocess.run(["git", "clone", "--branch", "working", remote, str(dest)]).returncode
+                if rc != 0 and subprocess.run(["git", "clone", remote, str(dest)]).returncode != 0:
+                    print(f"  clone failed — skipping '{name}'")
+                    continue
+            else:
+                print(f"  '{name}' is local-only (no remote) and not present here — "
+                      f"can't set it up on this device; skipping")
+                paths.pop(name, None)
+                continue
+        paths[name] = p
     _dump_yaml(devices_path, devices)
 
     print("\nbootstrap complete:")

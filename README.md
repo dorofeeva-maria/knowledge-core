@@ -34,9 +34,10 @@ Format-templates (scaffolds for new modules) live in **separate repos**, not her
 
 ## Quickstart
 
-> Bootstrap is under construction. The intended flow: fork → `kc bootstrap` → pick your
-> AI → the center is set up on this device (clones modules, installs `kc` on PATH,
-> generates your AI's wrappers).
+See [`docs/setup.md`](docs/setup.md) for the full flow. In short: clone this engine as your
+center, `git remote rename origin upstream`, run `python3 -m kc bootstrap` (pick language,
+device id, assistant), then `kc new-module NAME --template info`. Prerequisites: git, Python
+3.9+, `pip install pyyaml`, and a `PATH` dir for the launcher.
 
 ## Status
 

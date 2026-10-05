@@ -70,6 +70,9 @@ def new_module(center, name, template=None, template_url=None, no_template=False
         print(f"created bare module -> {dest}")
 
     _register(center, name)
+    if (center / ".git").exists() and _git(center, "status", "--porcelain", "ecosystem/registry.yml").stdout.strip():
+        _git(center, "add", "ecosystem/registry.yml")
+        _git(center, "commit", "-m", f"register module {name}")
     _set_path(center, name, dest)
     print(f"registered '{name}' and recorded its path for this device")
 
