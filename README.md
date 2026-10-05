@@ -11,6 +11,12 @@ This repository is the **engine**: a public template you fork into a private *ce
 from which you grow your ecosystem. It carries only skeleton + documentation + tooling —
 never personal data.
 
+## Docs
+
+- [`docs/architecture.md`](docs/architecture.md) — how the ecosystem works (the canon).
+- [`docs/glossary.md`](docs/glossary.md) — terms in one place.
+- [`AGENTS.md`](AGENTS.md) — the AI-agnostic instruction entry.
+
 ## Layout
 
 | Path | What |
