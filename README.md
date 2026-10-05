@@ -15,6 +15,7 @@ never personal data.
 
 - [`docs/architecture.md`](docs/architecture.md) — how the ecosystem works (the canon).
 - [`docs/glossary.md`](docs/glossary.md) — terms in one place.
+- [`docs/templates.md`](docs/templates.md) — how module templates are authored.
 - [`AGENTS.md`](AGENTS.md) — the AI-agnostic instruction entry.
 
 ## Layout

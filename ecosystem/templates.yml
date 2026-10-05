@@ -1,13 +1,10 @@
 # Catalog of module templates offered when creating a module. Read by the center.
-# The engine ships defaults; add your own — any public git repo can be a template.
-# A module's chosen template is recorded as its git `upstream` remote, NOT here; this file
-# is only the list of options for the suggestion step.
-#
-# `source` may be a git URL or (until a template is pushed) a local path.
+# The engine ships only `info` as a starting point; process-type templates emerge from real
+# work and are added here as they are extracted. Add your own — any git repo can be a template.
+# A module's chosen template is recorded as its git `upstream` remote, NOT here; this file is
+# only the list of options for the suggestion step. `source` may be a git URL or a local path.
+# See docs/templates.md for how templates are authored.
 templates:
   info:
     source: git@github.com:dorofeeva-maria/template-info.git
-    when: A knowledge module — notes and references, no heavy process.
-  project:
-    source: git@github.com:dorofeeva-maria/template-project.git
-    when: An active project — its own goal, plan, and running log.
+    when: A knowledge module — notes and references (entities / concepts / summaries).
