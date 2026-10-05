@@ -43,7 +43,9 @@ structure with the user**, then rewrite the template's placeholders (AGENTS.md, 
 starter notes) into the module's real identity and remove any leftover template text. The
 module repo must end up with **no ecosystem references** (see `docs/templates.md`). A
 format-template extracted from a stabilized module follows the same rules and may carry
-type-specific, model-agnostic tooling.
+type-specific, model-agnostic tooling. Before publishing a template, pass the
+`docs/templates.md` checklist: run `kc check-template` (no ecosystem references) and confirm an
+assistant could build an adequate module from it standalone.
 
 ## Retire
 Propose `frozen` (read-only, keep) or `disconnected` (center stops interacting; the repo

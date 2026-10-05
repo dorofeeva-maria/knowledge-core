@@ -12,6 +12,11 @@ REQUIRED = ("title", "type", "updated")
 SKIP_DIRS = (".git", ".claude", ".cursor", ".obsidian", "node_modules", "__pycache__")
 SKIP_FILES = ("index.md", "log.md", "CLAUDE.md", "AGENTS.md", "README.md")
 INDEX_HEADER = "<!-- auto-generated index — regenerate after adding/removing notes; do not edit by hand -->"
+# Terms that must not appear inside a module/template repo (it must read as standalone).
+ECO_TERMS = re.compile(
+    r"\b(ecosystem|knowledge-core|registry|kc|KC_[A-Z]+|ensure-wrappers|add-agent|bootstrap|"
+    r"devices\.local|candidates\.md|journal\.md|upstream|center|fork)\b", re.I)
+SCAN_SUFFIXES = (".md", ".txt", ".yml", ".yaml", ".py", ".sh", ".toml")
 
 
 def md_files(root):
@@ -154,6 +159,28 @@ def lint(root, verbose):
         for r, msg in problems:
             print(f"  {r}: {msg}")
     return len(problems)
+
+
+def check_template(root):
+    """Flag ecosystem references in a template/module repo — it must read as standalone.
+    Advisory: reports matches for review (some words can be legitimate content)."""
+    hits = []
+    for p in sorted(root.rglob("*")):
+        if not p.is_file() or p.suffix not in SCAN_SUFFIXES:
+            continue
+        if any(part in SKIP_DIRS for part in p.relative_to(root).parts):
+            continue
+        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if ECO_TERMS.search(line):
+                hits.append((p.relative_to(root).as_posix(), i, line.strip()))
+    if not hits:
+        print(f"check-template {root.name}: ok — no ecosystem references")
+        return 0
+    print(f"check-template {root.name}: {len(hits)} possible ecosystem reference(s) — "
+          f"a module repo must not mention the ecosystem; review:")
+    for f, i, line in hits:
+        print(f"  {f}:{i}: {line[:100]}")
+    return len(hits)
 
 
 def compact_log(path, keep):

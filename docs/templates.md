@@ -20,6 +20,16 @@ modules are forked from it (the fork sets the template as `upstream`; see the fo
   (e.g. a `tools/` folder). Like all module content, they carry no ecosystem references.
 - **Fork model:** content on `working`, `main` mirrors the template.
 
+## Checklist (before publishing or extracting a template)
+
+1. **No ecosystem references:** `kc check-template <template-dir>` reports clean (review any
+   flagged lines — a module repo must not mention the center, registry, `kc`, the fork model,
+   or its own template-ness).
+2. **Standalone adequacy:** `AGENTS.md` alone lets an assistant build an adequate module
+   *without the center* — it explains, in tool-neutral terms, how to add notes (frontmatter +
+   TL;DR), the folder structure, how to link, and how to keep `index.md` and `log.md`. If an
+   assistant with only this repo couldn't produce a sensible module, the template is not ready.
+
 ## Using a template (fork → first-use rewrite)
 
 `kc new-module` forks the template, sets `upstream`, and checks out `working`. Then, on
