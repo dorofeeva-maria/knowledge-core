@@ -28,8 +28,10 @@ How anyone creates an ecosystem from this engine, and how to add it to another d
    assistant's wrappers, records the device):
    `python3 -m kc bootstrap`  → answer: language, device id, assistant(s). It creates the core's
    state files (`ecosystem/registry.yml`, `decisions.md`, `todo/`, `instance.yml`).
-5. Push your core (if you added an origin): `kc push-all`.
-6. Create modules as you need them:
+5. Log in to GitHub: `gh auth login` — required before the first push, since `kc` verifies your
+   core's `origin` is a private repo before pushing private content (ADR 0014).
+6. Push your core (if you added an origin): `kc push-all`.
+7. Create modules as you need them:
    `kc new-module NAME --template info`  (or `--no-template`, or `--template-url <url>`),
    or register repos you already have: `kc add-module NAME PATH` (`--external` if not yours).
 
@@ -40,11 +42,12 @@ except the `upstream` remote.
 
 1. Clone your core:
    `git clone <your-core-url> my-core && cd my-core`
-2. Bootstrap with a new device id:
+2. Log in to GitHub on this device: `gh auth login` (same reason as above — needed for pushes).
+3. Bootstrap with a new device id:
    `python3 -m kc bootstrap`  → for each module, choose whether to set it up here; modules with
    a remote are cloned to this device's path. **Local-only modules (no remote) can't travel** —
    push them to a remote first if you want them on more than one device.
-3. From now on, each session start pulls the core and present modules.
+4. From now on, each session start pulls the core and present modules.
 
 Notes:
 - Every device restores the `upstream` remotes (engine from `ecosystem/instance.yml`, templates
