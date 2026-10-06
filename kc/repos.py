@@ -19,6 +19,35 @@ def _repo_root(path):
     return Path(r.stdout.strip()) if r.returncode == 0 else None
 
 
+_SCAN_SKIP = (".git", ".claude", ".cursor", ".obsidian", "node_modules", "__pycache__")
+
+
+def _has_private_note(path):
+    """True if any note in the module carries the `private` tag (ADR 0014)."""
+    if not path or not Path(path).exists():
+        return False
+    p = Path(path)
+    for f in p.rglob("*.md"):
+        if any(part in _SCAN_SKIP for part in f.relative_to(p).parts):
+            continue
+        fm = maintain.frontmatter(f.read_text(encoding="utf-8", errors="replace")) or {}
+        if re.search(r"\bprivate\b", fm.get("tags", "") or ""):
+            return True
+    return False
+
+
+def _needs_private_origin(core, path):
+    """Private content must push only to a private origin: the core always, a module flagged
+    `private`, or a module holding a `private`-tagged note (ADR 0014)."""
+    rp = Path(path).resolve()
+    if rp == Path(core).resolve():
+        return True
+    for m in C.resolve(core)[0]:
+        if m["path"] and m["path"].resolve() == rp:
+            return bool(m["private"]) or _has_private_note(path)
+    return _has_private_note(path)
+
+
 def _print_report(report):
     w = max((len(n) for n, _ in report), default=4)
     for n, s in report:
@@ -199,7 +228,7 @@ def commit_push(core, message, all_repos=False):
         if r.returncode != 0:
             report.append((name, f"commit fail: {G.last(r.stderr)}"))
             continue
-        report.append((name, "committed, " + G.push(path)))
+        report.append((name, "committed, " + G.push(path, _needs_private_origin(core, path))))
     _print_report(report)
     return report
 
@@ -209,6 +238,6 @@ def push_all(core):
     for name, path, ext, _ in _targets(core, include_frozen=False):
         if ext:
             continue
-        report.append((name, G.push(path) if G.is_repo(path) else "absent"))
+        report.append((name, G.push(path, _needs_private_origin(core, path)) if G.is_repo(path) else "absent"))
     _print_report(report)
     return report

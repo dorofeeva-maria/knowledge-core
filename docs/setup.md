@@ -8,6 +8,10 @@ How anyone creates an ecosystem from this engine, and how to add it to another d
   `python3` is often a Microsoft Store stub). After bootstrap, the `kc` launcher picks the right
   one, and module checks that start with `python` run with the same interpreter as `kc`.
 - **PyYAML**: `pip install pyyaml` (used by `kc`).
+- **GitHub CLI `gh`** — install (`brew install gh`, `winget install GitHub.cli`, or see
+  cli.github.com) and run `gh auth login`. `kc` uses it to verify that private content (the core,
+  a `private` module) is pushed only to a private repo; without it, private/core pushes refuse
+  (ADR 0014).
 - A directory on your `PATH` for the launcher — `~/.local/bin` on macOS/Linux,
   `%USERPROFILE%\.local\bin` on Windows. `kc bootstrap` writes the launcher there and tells
   you if it isn't on `PATH` yet.
@@ -47,6 +51,8 @@ Notes:
   from the registry) and may apply updates; the sync order makes this safe (ADR 0003).
 - Per-device absolute paths live in the gitignored `ecosystem/devices.local.yml`; the committed
   registry stays device-agnostic.
+- Protect the public engine and template repos on the host: allow changes to `main` only via pull
+  request, so a misconfigured push can never land private core content there (ADR 0014).
 
 ## OS notes
 
