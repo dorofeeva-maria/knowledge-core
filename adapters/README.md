@@ -6,8 +6,9 @@ that assistant:
 
 - **wrapper** — a thin "slash command" per skill that points back at `skills/<name>.md`;
 - **pointer** — the assistant's canon entry file (e.g. `CLAUDE.md`) pointing at `AGENTS.md`;
-- **startup** — the session-start stub that re-runs `kc ensure-wrappers` (+ `pull-all`,
-  `todo`) so wrappers regenerate from the canon on every start and never drift.
+- **startup** — hooks that call `kc hook <event>`: on session start they regenerate wrappers
+  from the canon, sync repos and list pending work; during and at the end of a session they
+  keep the session draft (see below).
 
 `bootstrap` asks which assistant(s) you use on this device and installs their stubs;
 `kc add-agent <name>` adds one later. Generated wrappers are **gitignored** — they are
@@ -26,13 +27,23 @@ wrapper:                      # optional: one file per skill
 pointer:                      # optional: a single canon-entry file
   path: "<path>"
   body: "<text>"
-startup:                      # optional: session-start integration
+transcript:                   # optional: lets kc keep the session draft (ADR 0006)
+  format: <reader>            # e.g. claude-jsonl
+  include_tool_results: [..]  # tools whose results are the human's words
+startup:                      # optional: hook integration
   file: "<path>"
-  merge_json: { ... }         # deep-merged into a JSON file (idempotent)
+  merge_json: { ... }         # deep-merged into a JSON file; list entries whose command
+                              # starts with "kc " are replaced, never duplicated
 ```
+
+Hooks call `kc hook <event> --agent <name>` with the assistant's event JSON on stdin:
+`session-start` (sync, todo, wrappers, session bookkeeping), `stop` (count turns; capture the
+draft in the background when due), `pre-compact` and `session-end` (capture now; at the end,
+warn if the session was not closed). An assistant without transcript access still works; it
+just has no automatic draft.
 
 Placeholders: `{skill}` = skill file stem, `{description}` = skill frontmatter `description`.
 `merge_json` suits JSON-config assistants (like Claude Code); assistants with other config
 shapes get their own directive as the adapter set grows.
 
-- `claude/` — Claude Code (`.claude/commands/*` wrappers, `CLAUDE.md` pointer, SessionStart hook).
+- `claude/` — Claude Code (`.claude/commands/*` wrappers, `CLAUDE.md` pointer, SessionStart / Stop / PreCompact / SessionEnd hooks, JSONL transcript).

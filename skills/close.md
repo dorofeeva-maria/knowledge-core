@@ -2,7 +2,7 @@
 title: Close a session
 type: skill
 updated: 2026-10-06
-description: Consolidate the session — route knowledge into modules, reconcile, lint, commit, push.
+description: Consolidate the session — route its draft into modules, reconcile, lint, commit and push.
 ---
 
 # Skill: close
@@ -15,8 +15,10 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
 ## Before you start
 - Run `kc registry` to see the modules, their `status`, `external` flag + write zones, and
   which are present on this device.
-- Gather the session's material: everything in `drafts/`, everything in `inbox/` (see the
-  `inbox` skill), and the conversation so far.
+- Run `kc draft` to flush the rest of the conversation into this session's draft.
+- Gather the session's material: this session's draft (`drafts/*-<session8>.md`, a raw
+  transcript), everything in `inbox/` (see the `inbox` skill), and other leftovers the human
+  chose to process now (`skills/todo.md`).
 
 ## Steps
 
@@ -51,17 +53,18 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
 
 6. **Commit (per module).** In each touched repo (and the core) run
    `kc commit-push -m "<message>"` — a message describing what changed **in that module**,
-   honoring the module's own commit conventions if any. Do not push yet. Show the human the
-   combined report.
+   honoring the module's own commit conventions if any. It pushes right away (ADR 0006),
+   except **external** modules: show the human their commits and, on yes,
+   `kc push-external NAME`. Show the combined report.
 
-7. **Push.** Ask the human to confirm, showing the commits. On yes, run `kc push-all`.
-
-8. **Clear.** Delete the drafts and inbox items you processed, and their todo items if any.
-   **Keep media originals and their transcripts** — do not delete media. Anything unresolved
-   stays and becomes a todo item; say so.
+7. **Clear.** Delete this session's draft and the inbox items you processed, and their todo
+   items if any; commit the core. **Keep media originals and their transcripts** — do not
+   delete media. Anything unresolved stays and becomes a todo item; say so. If the
+   conversation goes on after `close`, a new draft starts by itself from this point.
 
 ## Rules
 - Mechanical steps go through `kc`; cognitive judgment is yours.
-- You are interactive here: content is written with the human present; structural changes and
-  the push need explicit confirmation.
+- You are interactive here: content is written with the human present; structural changes,
+  pushes of external modules and changes proposed to a template or the engine need explicit
+  confirmation. Everything else is pushed on commit.
 - Leftover drafts/inbox become todo items at the next session start (`kc todo`).

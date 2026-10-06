@@ -37,6 +37,11 @@ The start hook runs `kc pull-all` and `kc todo`. Read their report before anythi
 - `UPDATE APPLIED` — a template/engine update landed; review it with `skills/update.md`.
 - `skipped (…)` — the repo was not synced; tell the human why.
 - `todo: N pending` — walk through it with `skills/todo.md` (the human may defer all).
+- `session: new | continuing` — the session's draft is captured automatically; you do not
+  write it. `close` processes it.
+
+Every commit is pushed right away (`kc commit-push`), except external modules (confirm, then
+`kc push-external NAME`) and changes proposed to a template or the engine (confirm first).
 
 ## Large tasks
 

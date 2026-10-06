@@ -4,3 +4,7 @@
 # Default language for sessions and for writing into modules.
 # A module may override this with its own setting; a session may override via KC_LANGUAGE in .env.
 language: en
+
+# Session draft capture (ADR 0006): every N turns or M minutes, whichever comes first.
+draft_every_turns: 5
+draft_every_minutes: 15

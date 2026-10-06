@@ -22,7 +22,7 @@ files left in `inbox/` and `drafts/`), or whenever the human asks.
      and bump `updated`.
    - **Reject** — delete the item and its source (media excepted) and add an entry to
      `ecosystem/decisions.md` saying what was rejected and why.
-3. Commit the core (`kc commit-push -m "todo: …"` from the core) — pushing waits for `close`.
+3. Commit the core (`kc commit-push -m "todo: …"` from the core); it is pushed right away.
 
 Creating items: when you defer a candidate, an adaptation or a large task in any skill, write
 an item in `ecosystem/todo/` in the format of `ecosystem/todo/README.md`.

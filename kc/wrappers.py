@@ -45,7 +45,9 @@ def _merge_json(path, fragment):
             if isinstance(v, dict) and isinstance(a.get(k), dict):
                 merge(a[k], v)
             elif isinstance(v, list):
-                lst = a.setdefault(k, [])
+                # entries owned by kc (a command starting with "kc ") are replaced, not kept
+                lst = [x for x in a.get(k, []) if '"command": "kc ' not in json.dumps(x)]
+                a[k] = lst
                 for item in v:
                     if item not in lst:          # idempotent for identical entries
                         lst.append(item)

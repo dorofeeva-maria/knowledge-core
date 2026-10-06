@@ -155,15 +155,17 @@ def detach(core, name, yes=False):
 
 
 # ---------------------------------------------------------------- commit / push
-def commit_push(core, message, all_repos=False, do_push=False):
-    targets = []
+def commit_push(core, message, all_repos=False):
+    """Commit and push right away (ADR 0006). External modules are committed but never pushed
+    here — the human confirms that with `kc push-external NAME`."""
+    ext_paths = {Path(p).resolve() for _, p, ext, _ in _targets(core) if ext and p}
     if all_repos:
         targets = [(n, p) for n, p, ext, _ in _targets(core, include_frozen=False) if not ext and p]
     else:
         root = _repo_root(Path.cwd())
         if not root:
             raise SystemExit("kc commit-push: not inside a git repo")
-        targets.append((root.name, root))
+        targets = [(root.name, root)]
     report = []
     for name, path in targets:
         if not G.is_repo(path):
@@ -177,9 +179,23 @@ def commit_push(core, message, all_repos=False, do_push=False):
         if r.returncode != 0:
             report.append((name, f"commit fail: {G.last(r.stderr)}"))
             continue
-        report.append((name, "committed" + (", " + G.push(path) if do_push else " (no push)")))
+        if Path(path).resolve() in ext_paths:
+            report.append((name, "committed (external: confirm, then `kc push-external NAME`)"))
+        else:
+            report.append((name, "committed, " + G.push(path)))
     _print_report(report)
     return report
+
+
+def push_external(core, name):
+    for n, p, ext, _ in _targets(core, modules_only=True):
+        if n == name:
+            if not ext:
+                raise SystemExit(f"kc push-external: '{name}' is not external — it is pushed on commit")
+            r = G.git(p, "push")
+            print(f"  {name}: " + ("pushed" if r.returncode == 0 else f"fail: {G.last(r.stderr)}"))
+            return r.returncode
+    raise SystemExit(f"kc push-external: no module '{name}' on this device")
 
 
 def push_all(core):

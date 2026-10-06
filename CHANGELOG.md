@@ -6,6 +6,9 @@ decisions behind changes are in `docs/adr/`.
 ## Unreleased
 
 ### Added
+- Session drafts: raw transcript captured by `kc hook stop|pre-compact|session-end` (background,
+  every 5 turns / 15 min), `kc draft`, `kc hook session-start`; adapter `transcript:` spec;
+  `kc push-external NAME`. (ADR 0006)
 - `ecosystem/todo/` (pending work, one file per item), `ecosystem/decisions.md`, `kc todo`
   (stubs leftover inbox/drafts files, lists items; replaces `kc check-drafts`),
   `skills/todo.md`; automatic `kc` changes are committed as `auto: …`. (ADR 0005)
@@ -19,6 +22,10 @@ decisions behind changes are in `docs/adr/`.
   content in git history or fold key decisions into `decisions.md`. (ADR 0005)
 
 ### Changed
+- Every commit is pushed right away (`kc commit-push`, `auto:` commits); confirmation only for
+  external modules and template/engine proposals. `--push` flag removed. Claude adapter hooks
+  replaced; kc-owned hook entries are replaced, not duplicated. **Migration:** run
+  `kc ensure-wrappers --agent claude`. (ADR 0006)
 - `inbox/` and `drafts/` contents are committed (were gitignored). (ADR 0005)
 - Fork model: one branch `main`, remotes `origin` + `upstream`; `kc pull-all` rebases onto
   origin, then onto upstream (updates always applied; conflicts block the repo); pushes are

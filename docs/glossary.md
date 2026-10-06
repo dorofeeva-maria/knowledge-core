@@ -18,8 +18,9 @@
 - **adapter** — `adapters/<assistant>/adapter.yml`; how to render wrappers + startup stub for one assistant.
 - **skill** — a markdown instruction for a cognitive operation (`close`, `inbox`, `emergence`, `update`, `todo`, `compact-log`).
 - **kc** — the mechanical CLI (deterministic plumbing).
-- **close** — the session-consolidation skill: route → reconcile → emergence → lint → commit → push → clear.
-- **inbox / drafts** — committed raw drop zone / session notes in the core; cleared by `close`; leftovers become todo items.
+- **close** — the session-consolidation skill: flush draft → route → reconcile → emergence → lint → record → commit+push → clear.
+- **session draft** — `drafts/<date>-<session8>.md`, the raw transcript of an open session, captured by `kc` hooks (ADR 0006).
+- **inbox / drafts** — committed raw drop zone / session drafts in the core; cleared by `close`; leftovers become todo items.
 - **todo** — `ecosystem/todo/`: pending work, one file per item; walked through at session start (`kc todo`, `skills/todo.md`).
 - **decisions** — `ecosystem/decisions.md`: decisions about the ecosystem (not the engine).
 - **auto commit** — a commit `kc` makes on its own, prefixed `auto:`; the audit trail of automatic actions.

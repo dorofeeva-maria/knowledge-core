@@ -20,8 +20,11 @@ Core-scoped (finds the core via KC_CORE or by searching upward):
   kc pull-all                sync core + present modules: origin, then template/engine updates
   kc update NAME             apply a template/engine update interactively (NAME or "core")
   kc detach NAME [--yes]     stop following the template/engine (NAME or "core"); warns first
-  kc commit-push [--all] [--push] -m MSG   commit current module (or --all); push only with --push
+  kc commit-push [--all] -m MSG   commit + push the current repo (or --all); external: commit only
   kc push-all                push core + present modules (force-with-lease; see ADR 0003)
+  kc push-external NAME      push an external module (only after the human confirms)
+  kc draft [--session ID]    capture the session transcript into its draft now
+  kc hook EVENT --agent NAME assistant hook entry: session-start | stop | pre-compact | session-end
   kc todo                    pending work: stub leftover inbox/drafts files, list all items
   kc ensure-wrappers --agent NAME   regenerate NAME's command wrappers from the canon
   kc add-agent NAME          install an assistant's wrappers + startup stub
@@ -115,7 +118,6 @@ def main(argv):
         repos.pull_all(_need_core())
     elif cmd == "commit-push":
         all_repos = "--all" in rest
-        do_push = "--push" in rest
         rest = [a for a in rest if a not in ("--all", "--push")]
         msg = None
         if "-m" in rest:
@@ -123,7 +125,19 @@ def main(argv):
             msg = rest[i + 1] if i + 1 < len(rest) else None
         if not msg:
             raise SystemExit("kc commit-push: -m MSG required")
-        repos.commit_push(_need_core(), msg, all_repos=all_repos, do_push=do_push)
+        repos.commit_push(_need_core(), msg, all_repos=all_repos)
+    elif cmd == "push-external":
+        if not rest:
+            raise SystemExit("kc push-external: NAME required")
+        return repos.push_external(_need_core(), rest[0])
+    elif cmd == "draft":
+        from . import session
+        session.capture(_need_core(), sid=_opt(rest, "--session"), force=True)
+    elif cmd == "hook":
+        if not rest:
+            raise SystemExit("kc hook: EVENT required")
+        from . import session
+        return session.hook(_need_core(), rest[0], _opt(rest, "--agent") or "claude")
     elif cmd == "update":
         if not rest:
             raise SystemExit("kc update: NAME required (a module name or 'core')")

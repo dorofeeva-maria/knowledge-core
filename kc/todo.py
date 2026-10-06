@@ -47,6 +47,10 @@ def _raw_files(core, folder):
 def stub_leftovers(core):
     """Create a todo stub for each inbox/drafts file that has none. Returns created paths."""
     known = {fm.get("source") for _, fm in items(core)}
+    from .session import current, draft_path
+    sid = current(core).get("session_id")
+    if sid:   # the running session's own draft is not a leftover
+        known.add(draft_path(core, sid).relative_to(core).as_posix())
     today = datetime.date.today().isoformat()
     created = []
     for folder, kind in SOURCES.items():

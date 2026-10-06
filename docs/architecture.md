@@ -105,12 +105,18 @@ an adapter still works via `AGENTS.md` (the universal fallback).
   reviewed via `skills/update.md`); then `kc todo` stubs leftover `inbox/`/`drafts/` files and
   lists all pending work, which the agent walks through with the human — apply, defer or
   reject each item, or defer everything (`skills/todo.md`).
-- **During**: a light draft in `drafts/`.
+- **During**: the session's draft `drafts/<date>-<session8>.md` is a raw transcript (the
+  human's messages and the assistant's replies) that `kc` appends in the background every
+  5 turns or 15 minutes, before compaction and at session end — committed and pushed each
+  time. A draft exists ⇔ its session has unprocessed content; on resume the same draft
+  continues (ADR 0006).
 - **`close`** (explicit, interactive, from the core): route knowledge into modules, reconcile
   conflicts (newer `updated` wins; genuine semantic conflicts go to the human), run emergence,
-  lint/index touched modules, record decisions and todo items, commit per module, push on
-  confirmation, clear processed raw (keep media). See `skills/close.md`.
-- Closing a session without `close` runs nothing heavy in the background.
+  lint/index touched modules, record decisions and todo items, commit and push per module
+  (external modules only after confirmation), delete the processed draft and raw (keep
+  media). See `skills/close.md`.
+- Ending a session without `close`: the end hook saves the rest of the transcript and warns;
+  the draft becomes a todo item at the next start.
 
 ## Automation & safety
 

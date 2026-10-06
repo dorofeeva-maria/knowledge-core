@@ -20,7 +20,14 @@ pointer:
     Canonical, AI-agnostic instructions are in `AGENTS.md`. Read it first and follow it.
     Commands under `.claude/commands/` are generated pointers to `skills/` — do not edit by hand.
 
-# Session-start integration: deep-merged into a JSON settings file (idempotent).
+# How kc reads this assistant's session transcript to keep the session draft (ADR 0006).
+# include_tool_results: tools whose results are the human's words (answers to questions).
+transcript:
+  format: claude-jsonl
+  include_tool_results: [AskUserQuestion]
+
+# Hooks: deep-merged into a JSON settings file. Entries whose command starts with "kc " are
+# owned by kc and replaced on every run, so a changed command never leaves a stale copy.
 startup:
   file: ".claude/settings.json"
   merge_json:
@@ -28,4 +35,17 @@ startup:
       SessionStart:
         - hooks:
             - type: command
-              command: "kc ensure-wrappers --agent claude || true ; kc pull-all || true ; kc todo || true"
+              command: "kc hook session-start --agent claude"
+      Stop:
+        - hooks:
+            - type: command
+              command: "kc hook stop --agent claude"
+      PreCompact:
+        - hooks:
+            - type: command
+              command: "kc hook pre-compact --agent claude"
+      SessionEnd:
+        - hooks:
+            - type: command
+              command: "kc hook session-end --agent claude"
+              timeout: 60

@@ -43,6 +43,6 @@ Do not write to that repo until this section is done.
 
 ## C. Push
 
-An applied update rewrites the repo's history. Push it with `kc push-all` after the human
-confirms (as part of `close`, or right away if the human asks). If push reports that origin
-moved, run `kc pull-all` and push again.
+An applied update rewrites the repo's history. Push it right away with `kc push-all` (every
+commit is pushed, ADR 0006). If push reports that origin moved, run `kc pull-all` and push
+again.

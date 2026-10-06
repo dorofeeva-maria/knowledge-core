@@ -7,7 +7,7 @@ thin per-AI wrappers (e.g. a Claude slash command) that just point here.
 
 Planned skills (content added incrementally, with sign-off):
 
-- `close.md` — consolidate a session: route knowledge into modules, reconcile, run `kc`, commit/push.
+- `close.md` — consolidate a session: route its draft into modules, reconcile, run `kc`, commit/push.
 - `inbox.md` — process raw/dropped material into the right module.
 - `emergence.md` — propose a new module, a tool-package extraction, or a module split.
 

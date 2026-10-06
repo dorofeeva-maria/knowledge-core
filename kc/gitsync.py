@@ -137,15 +137,18 @@ def sync(path, name, external=False, upstream_url=None, interactive=False):
     return "ok (" + "; ".join(msgs) + ")" if msgs else "ok (no remotes)"
 
 
-def auto_commit(core, paths, message):
+def auto_commit(core, paths, message, and_push=True):
     """Commit only `paths` in the core as an automatic action: message prefixed `auto:` so the
-    history of what kc did on its own is `git log --grep '^auto:'` (ADR 0005)."""
+    history of what kc did on its own is `git log --grep '^auto:'` (ADR 0005). Pushed right
+    away, like every commit to the core (ADR 0006)."""
     if not is_repo(core):
         return False
     git(core, "add", "-A", "--", *paths)
     if not git(core, "diff", "--cached", "--quiet", "--", *paths).returncode:
         return False
     r = git(core, "commit", "-m", f"auto: {message}", "--", *paths)
+    if r.returncode == 0 and and_push:
+        push(core)
     return r.returncode == 0
 
 
