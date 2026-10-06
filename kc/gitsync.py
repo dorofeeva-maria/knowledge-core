@@ -66,6 +66,12 @@ def _unmerged(path):
     return git(path, "diff", "--name-only", "--diff-filter=U").stdout.split()
 
 
+def conflicted(path):
+    """An unfinished rebase/merge or unmerged files: committing now would record conflict markers
+    as resolved and can drop a commit (finding A4)."""
+    return _rebase_in_progress(path) or bool(_unmerged(path))
+
+
 DETACHED = object()   # config says "no upstream" explicitly (detached or bare)
 
 
@@ -180,6 +186,10 @@ def auto_commit(core, paths, message, and_push=True):
     history of what kc did on its own is `git log --grep '^auto:'` (ADR 0005). Pushed right
     away, like every commit to the core (ADR 0006)."""
     if not is_repo(core):
+        return False
+    if conflicted(core):
+        print("  not committed — the core has an unfinished rebase/conflict; resolve it first "
+              "(`kc update core`)")
         return False
     big = stage(core, paths, large_limit(core))
     if big:

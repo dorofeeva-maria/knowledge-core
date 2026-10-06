@@ -14,6 +14,9 @@ decisions behind changes are in `docs/adr/`.
   lines) before writing; `AGENTS.md` tells the assistant not to echo secrets back. (finding B10)
 
 ### Fixed
+- `kc commit-push` and `auto_commit` refuse a repo with an unfinished rebase/merge or unmerged
+  files instead of `git add -A`-ing the conflict markers as resolved (which could drop a commit);
+  finish it with `kc update NAME` first. (finding A4)
 - `kc pull-all` / `commit-push` / `push-all` exit non-zero on a real failure (push rejected,
   conflict, rebase in progress, fetch/network) instead of always `0`; push failures are classified
   (branch protection / non-fast-forward / permission / network) instead of always "someone pushed
