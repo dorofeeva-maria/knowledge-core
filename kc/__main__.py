@@ -22,7 +22,7 @@ Core-scoped (finds the core via KC_CORE or by searching upward):
   kc pull-all                sync core + present modules: origin, then template/engine updates
   kc update NAME             apply a template/engine update interactively (NAME or "core")
   kc detach NAME [--yes]     stop following the template/engine (NAME or "core"); warns first
-  kc commit-push [--all] -m MSG   commit + push the current repo (or --all); external: commit only
+  kc commit-push [--all] -m MSG   commit + push the current repo (or --all); never in external modules
   kc push-all                push core + present modules (force-with-lease; see ADR 0003)
   kc draft [--session ID]    capture the session transcript into its draft now
   kc hook EVENT --agent NAME assistant hook entry: session-start | stop | pre-compact | session-end
@@ -30,7 +30,6 @@ Core-scoped (finds the core via KC_CORE or by searching upward):
   kc ensure-wrappers --agent NAME   regenerate NAME's command wrappers from the canon
   kc add-agent NAME          install an assistant's wrappers + startup stub
 
-DIR defaults to the current directory.
 """
 import io
 import sys
