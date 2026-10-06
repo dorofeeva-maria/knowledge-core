@@ -13,6 +13,7 @@ processed, so a resumed session starts a fresh draft from there.
 import datetime
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -23,6 +24,26 @@ from . import gitsync as G
 
 STATE = ".kc"                      # gitignored, per device
 LOCK_STALE = 300
+
+# Best-effort secret masking before a transcript line is written to a draft (B10). Not a
+# guarantee — the assistant is also told not to echo secrets (AGENTS.md).
+_SECRET_RE = [
+    re.compile(r"(?i)\b[rs]k-[A-Za-z0-9]{20,}"),                       # openai-style keys
+    re.compile(r"\bgh[posru]_[A-Za-z0-9]{20,}"),                       # github tokens
+    re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}"),
+    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),                               # aws access key id
+    re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}"),                     # slack
+    re.compile(r"\bAIza[0-9A-Za-z_\-]{20,}"),                          # google
+    re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._\-]{20,}"),
+    re.compile(r"-----BEGIN[^-]+PRIVATE KEY-----[\s\S]*?-----END[^-]+PRIVATE KEY-----"),
+    re.compile(r"(?im)^\s*(password|passwd|secret|token|api[_-]?key|access[_-]?key)\s*[:=]\s*\S+"),
+]
+
+
+def _redact(text):
+    for rx in _SECRET_RE:
+        text = rx.sub("[redacted]", text)
+    return text
 
 
 # ---------------------------------------------------------------- local state
@@ -142,6 +163,7 @@ def capture(core, sid=None, force=False, push=True):
             print(f"draft: no transcript reader for '{agent}'")
             return None
         text, offset = reader(transcript, st.get("offset", 0), spec.get("include_tool_results") or [])
+        text = _redact(text)   # best-effort secret masking before the draft is written (B10)
         st.update(offset=offset, turns=0, last_capture=time.time())
         save_state(core, sid, st)
         if not text:

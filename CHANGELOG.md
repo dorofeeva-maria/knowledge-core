@@ -10,6 +10,8 @@ decisions behind changes are in `docs/adr/`.
   verified-private origin: a local path, or a GitHub repo `gh` reports `private`. Public,
   non-GitHub, or unverifiable origins refuse the push (`NOT PUSHED — …`). `gh` is now a
   prerequisite; `kc bootstrap` reports if it is missing/unauthenticated. (ADR 0014)
+- Session-draft capture best-effort masks obvious secrets (API keys, tokens, `password:`-style
+  lines) before writing; `AGENTS.md` tells the assistant not to echo secrets back. (finding B10)
 
 ### Fixed
 - Wrappers of removed skills are deleted; the start hook syncs repos before regenerating
