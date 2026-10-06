@@ -281,15 +281,16 @@ def origin_privacy(path):
 
 def _classify_push(stderr):
     s = (stderr or "").lower()
-    if "protected branch" in s or ("protected" in s and "rejected" in s):
+    if "protected branch" in s or ("protected" in s and "reject" in s):
         return "rejected by branch protection — open a PR instead"
-    if "fetch first" in s or "non-fast-forward" in s or "behind" in s:
-        return "someone pushed meanwhile; run `kc pull-all`, then push again"
     if "permission" in s or "denied" in s or "authentication failed" in s or "403" in s:
         return "permission denied — check your access (`gh auth status`)"
     if ("could not resolve" in s or "timed out" in s or "timeout" in s
             or "unable to access" in s or "network" in s):
         return "network error — check your connection, then retry"
+    if ("stale info" in s or "fetch first" in s or "non-fast-forward" in s or "behind" in s
+            or "[rejected]" in s or "rejected" in s or "failed to push" in s):
+        return "someone pushed meanwhile; run `kc pull-all`, then push again"
     return last(stderr) or "push failed"
 
 
