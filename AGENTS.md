@@ -85,7 +85,10 @@ background agents, so the session is not blocked), run it **now**, or **defer** 
 - Modules are independent and know nothing of the ecosystem; never add cross-module links —
   related notes share tags instead (`kc tags TAG`, vocabulary in `ecosystem/tags.yml`).
 - Privacy: details of a `private` module or a note tagged `private` never go into other modules
-  (mention them only in general terms) or into anything public.
+  (mention them only in general terms) or into anything public. Private content (the core, a
+  `private` module, or any `private`-tagged note) is pushed only to a private GitHub repo; if a
+  push refuses (`NOT PUSHED …` because origin is public, non-GitHub, or unverifiable), stop and
+  ask the human — never work around it (a work GitLab is not private). (ADR 0014)
 - Each piece of knowledge is written into the module it belongs to, in that module's own format.
   Knowledge never moves between modules by copying files or linking: the core re-distills it.
 - Propose structural changes (new module, extraction, split) — the human decides.

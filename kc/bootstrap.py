@@ -6,6 +6,7 @@ registry module on this device. External modules default to *not* set up locally
 """
 import os
 import platform
+import shutil
 import subprocess
 from pathlib import Path
 from . import core as C
@@ -65,6 +66,14 @@ def install_launcher(core):
 
 def _git(path, *args):
     return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True, encoding="utf-8", errors="replace")
+
+
+def _gh_ready():
+    """'ok' | 'unauthed' | 'missing' — gh is needed to verify private origins (ADR 0014)."""
+    if not shutil.which("gh"):
+        return "missing"
+    r = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True)
+    return "ok" if r.returncode == 0 else "unauthed"
 
 
 def _wire_core(core, inst):
@@ -183,6 +192,7 @@ def run(core, device_id=None, agents=None, language=None, yes=False):
         paths[name] = p
     _dump_yaml(devices_path, devices)
 
+    gh = _gh_ready()
     print("\nbootstrap complete:")
     print(f"  core    {core}")
     print(f"  device    {device_id}")
@@ -190,3 +200,5 @@ def run(core, device_id=None, agents=None, language=None, yes=False):
     print(f"  kc        {launcher}" + ("" if on_path else f"   (add {launcher.parent} to PATH)"))
     print(f"  agents    {', '.join(agents) or '(none)'}")
     print(f"  modules   {', '.join(paths) or '(none yet)'}")
+    print(f"  gh        {gh}" + ("" if gh == "ok" else
+          "   — private pushes refuse without it: install gh + `gh auth login` (ADR 0014)"))

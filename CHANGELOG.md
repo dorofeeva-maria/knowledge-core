@@ -5,6 +5,12 @@ decisions behind changes are in `docs/adr/`.
 
 ## Unreleased
 
+### Security
+- Private content (the core, a `private` module, or any `private`-tagged note) is pushed only to a
+  verified-private origin: a local path, or a GitHub repo `gh` reports `private`. Public,
+  non-GitHub, or unverifiable origins refuse the push (`NOT PUSHED — …`). `gh` is now a
+  prerequisite; `kc bootstrap` reports if it is missing/unauthenticated. (ADR 0014)
+
 ### Fixed
 - Wrappers of removed skills are deleted; the start hook syncs repos before regenerating
   wrappers; wording of the language override, the default catalog and the write rule.

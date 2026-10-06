@@ -10,6 +10,8 @@ work) → rebase onto upstream/main (always apply template/engine updates). Push
 External repos are never rebased or pushed: fast-forward only, on whatever branch they use.
 """
 import os
+import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -177,7 +179,7 @@ def auto_commit(core, paths, message, and_push=True):
         return False
     r = git(core, "commit", "-m", f"auto: {message}", "--", *paths)
     if r.returncode == 0 and and_push:
-        push(core)
+        print("  " + push(core, private_required=True))   # the core is always private (ADR 0014)
     return r.returncode == 0
 
 
@@ -213,12 +215,70 @@ def contract(path, remote=None, upstream_url=None):
     return out
 
 
-def push(path):
+def _origin_url(path):
+    r = git(path, "remote", "get-url", "origin")
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def _is_local_remote(url):
+    if "://" in url:
+        return url.split("://", 1)[0] == "file"
+    if re.match(r"^[^/\\]+@[^/:]+:", url):   # scp-like git@host:path → remote
+        return False
+    return True                              # bare filesystem path
+
+
+def _github_owner_repo(url):
+    m = re.search(r"github\.com[:/]+([^/]+)/([^/]+?)(?:\.git)?/?$", url)
+    return f"{m.group(1)}/{m.group(2)}" if m else None
+
+
+def _gh_visibility(owner_repo):
+    """'private' | 'public' | None (gh missing / not authed / error)."""
+    if not shutil.which("gh"):
+        return None
+    r = subprocess.run(["gh", "repo", "view", owner_repo, "--json", "visibility", "-q", ".visibility"],
+                       capture_output=True, text=True, env=_ENV)
+    if r.returncode != 0:
+        return None
+    v = r.stdout.strip().lower()
+    return "private" if v in ("private", "internal") else "public" if v == "public" else None
+
+
+def origin_privacy(path):
+    """How safe `origin` is for private content (ADR 0014):
+    'local' | 'private' | 'public' | 'unknown-github' | 'non-github' | 'none'."""
+    url = _origin_url(path)
+    if not url:
+        return "none"
+    if _is_local_remote(url):
+        return "local"
+    owner_repo = _github_owner_repo(url)
+    if owner_repo is None:
+        return "non-github"
+    return _gh_visibility(owner_repo) or "unknown-github"
+
+
+def push(path, private_required=False):
     if "origin" not in remotes(path):
         return "no origin"
     b = branch(path)
     if b != BRANCH:
         return f"skipped (on branch '{b}')"
+    if private_required:
+        vis = origin_privacy(path)
+        if vis == "public":
+            return ("NOT PUSHED — private content, but origin is a PUBLIC GitHub repo. Make the "
+                    "repo private, or point origin at a private one.")
+        if vis == "unknown-github":
+            return ("NOT PUSHED — cannot verify origin is private. Install GitHub CLI and run "
+                    "`gh auth login`, then retry (private content is never pushed unverified).")
+        if vis == "non-github":
+            return ("NOT PUSHED — private content headed to a non-GitHub remote. It goes only to a "
+                    "private GitHub repo (a work GitLab is NOT private). Ask the human what this is.")
+        if vis == "none":
+            return "no origin"
+        # 'local' or 'private' → safe
     if not _includes_origin(path):
         return "not pushed: origin has commits you have not synced — run `kc pull-all` first"
     r = git(path, "push", "--force-with-lease", "-u", "origin", BRANCH)
