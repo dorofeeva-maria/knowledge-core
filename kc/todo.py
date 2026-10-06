@@ -58,6 +58,8 @@ def stub_leftovers(core):
             src = f.relative_to(core).as_posix()
             if src in known:
                 continue
+            if f.stat().st_size > G.large_limit(core):   # large files are not stored → no todo (ADR 0015)
+                continue
             p = todo_dir(core) / f"{today}-{kind}-{_slug(f.stem)}.md"
             n = 2
             while p.exists():

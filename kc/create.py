@@ -72,7 +72,7 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
             f"A self-contained module. Describe its purpose, structure, and rules here.\n"
             f"Notes use YAML frontmatter (title, type, updated); links are intra-module only.\n",
             encoding="utf-8", newline="\n")
-        (dest / ".gitignore").write_text("media/large/\n", encoding="utf-8", newline="\n")
+        (dest / ".gitignore").write_text(".DS_Store\n*.swp\n__pycache__/\n", encoding="utf-8", newline="\n")
         _git(dest, "add", "AGENTS.md", ".gitignore")
         _git(dest, "commit", "-m", "Initialize module")
         print(f"created bare module -> {dest}")

@@ -9,5 +9,5 @@ language: en
 draft_every_turns: 5
 draft_every_minutes: 15
 
-# Files larger than this are never committed (ADR 0007); keep them in <media>/large/.
+# Files larger than this are never committed or stored (ADR 0015): distil into notes + delete.
 large_file_mb: 20

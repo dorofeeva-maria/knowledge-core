@@ -167,6 +167,22 @@ def large_limit(core=None):
     return int(mb * 1024 * 1024)
 
 
+def large_files(path, limit=None):
+    """Working-tree files over the limit (untracked or modified). Large files are never stored or
+    committed (ADR 0015): the human distills them into notes and deletes the original, or deletes
+    it. Returns the offending paths so callers can block and ask."""
+    if not is_repo(path):
+        return []
+    limit = limit or large_limit()
+    out = []
+    for line in git(path, "status", "--porcelain").stdout.splitlines():
+        f = line[3:].strip().strip('"')
+        fp = Path(path) / f
+        if f and fp.is_file() and fp.stat().st_size > limit:
+            out.append(f)
+    return out
+
+
 def stage(path, paths=None, limit=None):
     """`git add` (all, or `paths`), then unstage files larger than the limit. Returns the
     list of files left out, so callers can tell the human (ADR 0007)."""
@@ -193,8 +209,8 @@ def auto_commit(core, paths, message, and_push=True):
         return False
     big = stage(core, paths, large_limit(core))
     if big:
-        print(f"  not committed (over {large_limit(core) // 2**20} MB, stays on this device): "
-              + ", ".join(big))
+        print(f"  skipped (over {large_limit(core) // 2**20} MB — large files are not stored; "
+              f"distill into notes and delete, or delete): " + ", ".join(big))
     if not git(core, "diff", "--cached", "--quiet", "--", *paths).returncode:
         return False
     r = git(core, "commit", "-m", f"auto: {message}", "--", *paths)

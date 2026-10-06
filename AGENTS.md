@@ -92,6 +92,9 @@ background agents, so the session is not blocked), run it **now**, or **defer** 
 - Secrets: never repeat a secret (API key, token, password) back in your replies — acknowledge it
   without echoing the value, so it does not enter the session transcript. `kc` also best-effort
   masks obvious secrets when capturing the draft, but do not rely on that.
+- Large files: a file over `large_file_mb` is never stored or committed (ADR 0015). When `kc`
+  blocks a commit or flags one, distil it into notes and delete the original, or delete it —
+  ask the human. Big files to keep verbatim live outside module repos.
 - Each piece of knowledge is written into the module it belongs to, in that module's own format.
   Knowledge never moves between modules by copying files or linking: the core re-distills it.
 - Propose structural changes (new module, extraction, split) — the human decides.

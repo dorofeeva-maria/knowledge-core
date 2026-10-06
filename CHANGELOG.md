@@ -5,6 +5,13 @@ decisions behind changes are in `docs/adr/`.
 
 ## Unreleased
 
+### Changed
+- Large files (over `large_file_mb`) are never stored or committed and there is no
+  `<media>/large/`: `kc` blocks a commit that includes one and flags it at session start,
+  `kc todo` does not stub it, and `close` cannot finish until it is distilled into notes and the
+  original deleted (or deleted). Fixes the permanent "skipped (uncommitted changes)" stall and the
+  dangling todo on other devices. (ADR 0015, supersedes 0007's `media/large/`; finding D1)
+
 ### Security
 - Private content (the core, a `private` module, or any `private`-tagged note) is pushed only to a
   verified-private origin: a local path, or a GitHub repo `gh` reports `private`. Public,

@@ -20,11 +20,11 @@ module (step 4).
    respect `external` write zones). Prefer updating an existing note over a near-duplicate.
    If the knowledge spreads over several modules, pick the **main** one for the original;
    the others mention the source in words, without a link.
-4. **Media** (PDF, images, audio, video): move the original into the main module's media
-   folder (registry `media`, default `media/`) and put its transcript beside it; the note
-   links to it inside the module. Files over the size limit (`large_file_mb`, default 20 MB)
-   go to `<media>/large/` — not committed, kept only on this device, not linked from notes.
-   If the module has `media: false`, keep only the notes and delete the original.
+4. **Media** (PDF, images, audio, video): if within the size limit (`large_file_mb`, default
+   20 MB), move the original into the main module's media folder (registry `media`, default
+   `media/`) with its transcript beside it; the note links to it. A file **over** the limit is
+   never stored (ADR 0015): distil it into notes (transcript / summary) and delete the original —
+   do not keep it. If the module has `media: false`, keep only the notes and delete the original.
 5. Messages and chats with other people (e.g. friends): process them fully, quotes included,
    and tag the notes `private`. Quote in the original language, word for word. Stop and ask
    when it is unclear who a person is, or when the person is not someone the human knows

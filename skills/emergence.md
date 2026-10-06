@@ -50,7 +50,7 @@ After `kc new-module` (content on `main`): **clarify its purpose and
 structure with the user**, then rewrite the template's placeholders (AGENTS.md, README,
 starter notes) into the module's real identity and remove any leftover template text. Write
 the settings into the module's `AGENTS.md` as plain rules (e.g. "Write in Russian. Keep source
-files in media/; files over 20 MB in media/large/, which is not committed."). The
+files in media/; distil anything over 20 MB into notes and delete the original."). The
 module repo must end up with **no ecosystem references** (see `docs/templates.md`). A
 format-template extracted from a stabilized module follows the same rules and may carry
 type-specific, model-agnostic tooling. Before publishing a template, pass the

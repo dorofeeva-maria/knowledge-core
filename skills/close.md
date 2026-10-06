@@ -70,7 +70,9 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
    `kc commit-push -m "<message>"` from that repo — a message describing what changed **in
    that module**, honoring the module's own commit conventions if any. It pushes right away
    (ADR 0006). External modules are not committed by `kc`: list the files you wrote there for
-   the human. Show the combined report.
+   the human. Show the combined report. If a repo comes back `blocked — large file(s) not
+   stored`, resolve that file with the human — distil it into notes and delete the original, or
+   delete it (ADR 0015) — then retry; `close` cannot finish while a large file is unresolved.
 
 7. **Clear.** Delete this session's draft and the inbox items you processed, and their todo
    items if any; commit the core. Media originals have moved into modules (`inbox` skill).

@@ -6,7 +6,7 @@ updated: 2026-10-06
 
 # 0007. Module settings and where media lives
 
-Status: accepted · 2026-10-06
+Status: accepted · 2026-10-06 (large-file handling superseded by 0015)
 
 ## Context
 

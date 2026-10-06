@@ -87,9 +87,9 @@ Field semantics (what each value makes the core do):
 - **`language`** — optional. The language the core writes into this module. Absent: the
   session language (`KC_LANGUAGE`, else `instance.yml` `language`).
 - **`media`** — optional. Folder (inside the module) where processed source media goes —
-  PDFs, images, audio, video — with transcripts beside them; files over the size limit go to
-  `<media>/large/`, which the module's `.gitignore` excludes. Absent: `media/`. `false`: the
-  module keeps no media (only the distilled notes).
+  PDFs, images, audio, video — with transcripts beside them. A file over the size limit
+  (`large_file_mb`) is never stored: distil it into notes and delete the original (ADR 0015).
+  Absent: `media/`. `false`: the module keeps no media (only the distilled notes).
 
 - **`check`** — optional. A read-only command, run in the module's root, that checks the
   module's format (for template modules it comes from the template catalog). Run by

@@ -55,7 +55,7 @@ def _print_report(report):
 
 
 _FAIL_MARKERS = ("fail", "not pushed", "conflict", "rebase in progress", "fetch failed",
-                 "sync skipped", "commit fail")
+                 "sync skipped", "commit fail", "blocked", "large file")
 
 
 def _failed(report):
@@ -126,9 +126,13 @@ def pull_all(core):
 def _health(core):
     """Module contract and format checks (ADR 0008): problems only, as extra report lines."""
     out = []
+    for f in G.large_files(core, G.large_limit(core)):
+        out.append(("core", f"large file not stored: {f} — distill into notes and delete, or delete"))
     for m in C.resolve(core)[0]:
         if m["external"] or m["status"] == "disconnected" or not G.is_repo(m["path"]):
             continue
+        for f in G.large_files(m["path"], G.large_limit(core)):
+            out.append((m["name"], f"large file not stored: {f} — distill into notes and delete, or delete"))
         up = m["upstream"] if m["upstream"] != "detached" else None
         for problem in G.contract(m["path"], m["remote"], up):
             out.append((m["name"], f"MISMATCH: {problem} — fix it, make the module external, or defer (todo)"))
@@ -227,13 +231,16 @@ def commit_push(core, message, all_repos=False):
         if G.conflicted(path):
             report.append((name, "skipped — unfinished rebase/conflict; finish `kc update` first"))
             continue
+        big = G.large_files(path, G.large_limit(core))
+        if big:
+            report.append((name, f"blocked — large file(s) not stored (over "
+                                 f"{G.large_limit(core) // 2**20} MB): {', '.join(big)}. Distill into "
+                                 f"notes and delete the original, or delete it, then retry."))
+            continue
         if not G.dirty(path):
             report.append((name, "nothing to commit"))
             continue
-        big = G.stage(path, limit=G.large_limit(core))
-        if big:
-            report.append((name, f"left out (over {G.large_limit(core) // 2**20} MB): {', '.join(big)} — "
-                                 f"move to <media>/large/ (not committed)"))
+        G.stage(path, limit=G.large_limit(core))
         if not G.git(path, "diff", "--cached", "--quiet").returncode:
             report.append((name, "nothing to commit"))
             continue
