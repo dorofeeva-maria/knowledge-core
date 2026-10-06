@@ -13,8 +13,8 @@ modules, keep the base consistent, and record what happened. You make the judgme
 the human; you call `kc` for every mechanical/deterministic step — never reimplement it.
 
 ## Before you start
-- Run `kc registry` to see the modules, their `status`, `external` flag + write zones, and
-  which are present on this device.
+- Run `kc registry` to see the modules, what each one holds (description), their `status`,
+  flags, and which are present on this device. It is the map for routing.
 - Run `kc draft` to flush the rest of the conversation into this session's draft.
 - Gather the session's material: this session's draft (`drafts/*-<session8>.md`, a raw
   transcript), everything in `inbox/` (see the `inbox` skill), and other leftovers the human
@@ -43,10 +43,11 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
    - If the module's `AGENTS.md` states a different language or media rule than the registry,
      point it out and propose to sync them.
 
-2. **Reconcile.** When new knowledge conflicts with what a module already says: if both notes
-   carry `updated` dates and one is clearly newer, the newer wins — note the change. If it is
-   a genuine semantic conflict with no clear winner, **stop and ask the human**; never pick
-   silently.
+2. **Reconcile.** Whenever new knowledge differs from what a module already says — an update,
+   a contradiction, or two notes that disagree — **ask the human** (with your assistant's
+   question tool if it has one), showing both versions with their sources and dates. Never pick
+   silently. Apply the answer; when a fact is replaced, keep the old value with its period
+   ("until 2026-10: …") if history matters.
 
 3. **Emergence.** Apply the `emergence` skill: spot a theme ripe for its own module, a
    reusable artifact to extract into a tool-package, or a module that should split. Record
@@ -56,8 +57,8 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
 4. **Module checks.** In each module you touched, follow its own `AGENTS.md` for index and
    format upkeep (e.g. rebuild its index), then run its registry `check` command if it has
    one, from the module's root; fix what it reports (mechanical fixes right away, content
-   fixes with the human). Regenerate the core's `HOME.md` with `kc home` if the set of modules
-   changed.
+   fixes with the human). If a module's purpose changed, update its registry description
+   (`kc set NAME description="…"`).
 
 5. **Record.** Add decisions about the ecosystem taken this session (module created, split,
    frozen or detached; a pending item rejected; a choice between real alternatives) to

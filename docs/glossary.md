@@ -3,7 +3,7 @@
 - **engine** — this public repo: the template you fork to start an ecosystem (CLI + skills +
   adapters + docs).
 - **core** — a fork of the engine; the orchestrator. Holds ecosystem meta-knowledge (registry,
-  HOME, todo, decisions) and the engine — never domain knowledge.
+  todo, decisions, tags, memory) and the engine — never domain knowledge.
 - **module** — an independent git repo of knowledge or a project. Self-contained; knows nothing
   of the ecosystem or other modules.
 - **external module** — a module with limited access (e.g. a work repo); read it, write only in

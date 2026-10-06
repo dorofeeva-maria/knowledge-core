@@ -94,5 +94,6 @@ def resolve(core):
             "language": m.get("language"),
             "media": m.get("media", "media/"),
             "check": m.get("check"),
+            "description": m.get("description"),
         })
     return out, did

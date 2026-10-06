@@ -23,7 +23,7 @@ generated from here by `adapters/`.
 | a module's own format check (index, lint) | module | its registry `check` command |
 | registry, pull-all, commit-push, push-all, todo | CLI | `kc <cmd>` |
 | resolve an update / stop following a template | CLI | `kc update NAME`, `kc detach NAME` |
-| HOME map, tags, check-template | CLI | `kc home`, `kc tags [TAG]`, `kc check-template` |
+| map of modules, tags | CLI | `kc registry`, `kc tags [TAG]` |
 | create a module / add an existing repo / change its fields / list templates | CLI | `kc new-module`, `kc add-module`, `kc set`, `kc templates` |
 | set up this device | CLI | `kc bootstrap` |
 | per-AI wrappers | CLI | `kc ensure-wrappers --agent NAME`, `kc add-agent NAME` |
@@ -66,6 +66,11 @@ belongs to one module's subject, in that module's `memory.md` (create it if the 
 such file and its format allows); otherwise in `ecosystem/memory.md`. One bullet: the fact,
 then **Why:**. Update or remove a fact that turns out wrong; never duplicate one in both places.
 Your assistant's built-in memory, if any, is not the source of truth.
+
+## Before creating a script, command or skill
+
+Assess it first with the *Reusable artifact* part of `skills/emergence.md` (keep in module /
+extract / defer), right then — not at `close`.
 
 ## Large tasks
 

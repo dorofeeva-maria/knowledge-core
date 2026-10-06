@@ -36,7 +36,8 @@ def _git(path, *args):
 
 
 def new_module(core, name, template=None, template_url=None, no_template=False, path=None,
-               remote=None, language=None, private=False, media=None, check=None):
+               remote=None, language=None, private=False, media=None, check=None,
+               description=None):
     dest = Path(path).expanduser() if path else (core.parent / "projects" / name)
     if dest.exists():
         raise SystemExit(f"kc new-module: {dest} already exists")
@@ -81,8 +82,9 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
     if remote:
         _git(dest, "remote", "add", "origin", remote)
         print(f"  origin -> {remote}: {push(dest)}")
+    from .repos import module_description
     _register(core, name, source, remote=remote, language=language, private=private, media=media,
-              check=check)
+              check=check, description=description or module_description(dest))
     from .gitsync import auto_commit
     auto_commit(core, ["ecosystem/registry.yml"], f"register module {name}")
     _set_path(core, name, dest)
@@ -90,12 +92,12 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
 
 
 def _register(core, name, upstream=None, remote=None, language=None, private=False, media=None,
-              check=None):
+              check=None, description=None):
     yaml = C._yaml()
     f = core / "ecosystem" / "registry.yml"
     data = (yaml.safe_load(f.read_text(encoding="utf-8")) if f.exists() else {}) or {}
     mods = data.get("modules") or {}
-    entry = {"remote": remote, "upstream": upstream, "external": False,
+    entry = {"description": description or "", "remote": remote, "upstream": upstream, "external": False,
              "status": "active", "private": bool(private)}
     if language:
         entry["language"] = language
@@ -109,7 +111,7 @@ def _register(core, name, upstream=None, remote=None, language=None, private=Fal
 
 
 def add_module(core, name, path, external=False, write_zones=(), upstream=None, language=None,
-               private=False, media=None, check=None):
+               private=False, media=None, check=None, description=None):
     """Register an existing repo as a module (ADR 0009). Its remote is read from `origin`, its
     template from an existing `upstream` remote unless given. Reports contract problems."""
     from .gitsync import is_repo, remotes, contract, auto_commit, prepare
@@ -124,8 +126,9 @@ def add_module(core, name, path, external=False, write_zones=(), upstream=None, 
         upstream = _git(dest, "remote", "get-url", "upstream").stdout.strip()
     if not external:
         prepare(dest)
+    from .repos import module_description
     _register(core, name, upstream, remote=remote, language=language, private=private,
-              media=media, check=check)
+              media=media, check=check, description=description or module_description(dest))
     if external:
         yaml = C._yaml()
         f = core / "ecosystem" / "registry.yml"
@@ -143,7 +146,7 @@ def add_module(core, name, path, external=False, write_zones=(), upstream=None, 
             print(f"  MISMATCH: {problem} — fix it, or re-add the module as external")
 
 
-SETTABLE = {"remote", "status", "private", "external", "write_zones", "language", "media", "check"}
+SETTABLE = {"description", "remote", "status", "private", "external", "write_zones", "language", "media", "check"}
 
 
 def set_fields(core, name, pairs):

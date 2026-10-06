@@ -11,7 +11,7 @@ isolation, usable with any assistant.
 - **Engine** (this repo, public) — skeleton + documentation + the `kc` CLI + skills + adapters.
   You fork it into a core; it never holds personal data.
 - **Core** — a fork of the engine. Holds no domain knowledge, only *meta-knowledge about
-  the ecosystem* plus the engine: the registry (state of modules), the HOME map, the todo list
+  the ecosystem* plus the engine: the registry (state of modules and what each holds), the todo list
   (pending work), the decisions log, and the engine's own ADRs. History is the git log.
 - **Module** — an independent git repo (knowledge or project). It knows nothing about the
   ecosystem and nothing about other modules; it can be any shape. It works standalone;
@@ -146,7 +146,7 @@ an adapter still works via `AGENTS.md` (the universal fallback).
 ## Automation & safety
 
 Automate the read-only / propose side; gate content writes. Mechanical, no-approval actions
-(index/HOME regen, intra-module link fixes, `updated` bumps, todo stubs) may run automatically at
+(index regeneration, intra-module link fixes, `updated` bumps, todo stubs) may run automatically at
 session boundaries. Content edits and structural changes (new module, split, extraction) are
 proposed; the human decides. There is no background daemon — mechanical work runs at session
 start and `close`. Every change `kc` makes on its own is a separate commit prefixed `auto:`, so

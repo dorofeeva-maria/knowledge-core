@@ -4,21 +4,19 @@ Deterministic, model-agnostic plumbing that any agent or git hook can call.
 The cognitive work (what to write, where, reconciling) lives in skills/ and is done
 by an assistant; kc only does the deterministic parts the skills invoke.
 
-Any repo:
-  kc check-template [DIR]     flag ecosystem references in a template/module (must be standalone)
-
 A module's own format tools (index, lint, log compaction) ship with its template and are run
 through the registry field `check` (ADR 0008).
 
 Core-scoped (finds the core via KC_CORE or by searching upward):
   kc bootstrap [--device-id ID] [--agent NAME]... [--language L] [--yes]   set up this device
-  kc registry                show resolved modules on this device
-  kc home                    regenerate ecosystem/HOME.md (the module map)
+  kc registry                modules on this device: presence, flags, description (the map)
   kc templates               list the module-template catalog
   kc new-module NAME [--template T | --template-url URL | --no-template] [--path P]
                  [--remote URL] [--language L] [--private] [--media DIR|none] [--check CMD]
+                 [--description TEXT]
   kc add-module NAME PATH [--external [--write-zone P]...] [--upstream URL] [--language L]
-                 [--private] [--media DIR|none] [--check CMD]   register an existing repo
+                 [--private] [--media DIR|none] [--check CMD] [--description TEXT]
+                                                  register an existing repo
   kc tags [TAG]              shared tag vocabulary: counts + unknown tags, or notes with TAG
   kc set NAME key=value...   change a module's registry fields (remote also rewires origin + pushes)
   kc pull-all                sync core + present modules: origin, then template/engine updates
@@ -66,9 +64,7 @@ def main(argv):
     verbose = "-v" in rest
     rest = [a for a in rest if a != "-v"]
 
-    if cmd == "check-template":
-        return maintain.check_template(Path(rest[0]).resolve() if rest else Path.cwd())
-    elif cmd == "bootstrap":
+    if cmd == "bootstrap":
         agents = []
         i = 0
         while i < len(rest):
@@ -99,7 +95,8 @@ def main(argv):
                           language=_opt(rest, "--language"),
                           private="--private" in rest,
                           media=_opt(rest, "--media"),
-                          check=_opt(rest, "--check"))
+                          check=_opt(rest, "--check"),
+                          description=_opt(rest, "--description"))
     elif cmd == "add-module":
         if len(rest) < 2 or rest[0].startswith("--"):
             raise SystemExit("kc add-module: NAME PATH required")
@@ -109,7 +106,8 @@ def main(argv):
                           external="--external" in rest, write_zones=zones,
                           upstream=_opt(rest, "--upstream"), language=_opt(rest, "--language"),
                           private="--private" in rest, media=_opt(rest, "--media"),
-                          check=_opt(rest, "--check"))
+                          check=_opt(rest, "--check"),
+                          description=_opt(rest, "--description"))
     elif cmd == "tags":
         from . import tags
         return tags.run(_need_core(), rest[0] if rest else None)
@@ -120,8 +118,6 @@ def main(argv):
         create.set_fields(_need_core(), rest[0], rest[1:])
     elif cmd == "registry":
         repos.show_registry(_need_core())
-    elif cmd == "home":
-        repos.home(_need_core())
     elif cmd == "pull-all":
         repos.pull_all(_need_core())
     elif cmd == "commit-push":

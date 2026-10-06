@@ -33,6 +33,9 @@ decisions behind changes are in `docs/adr/`.
 - AGENTS.md *Large tasks*: estimate scale, then background / now / defer. (ADR 0004)
 
 ### Removed
+- `HOME.md` and `kc home` (the map is `kc registry` with the new `description` field);
+  `kc check-template`. **Migration:** `kc set NAME description="…"` for each module; delete
+  `ecosystem/HOME.md`. (ADR 0013)
 - Engine no longer ships `ecosystem/registry.yml`, `HOME.md`, `decisions.md`, `templates.yml`;
   `kc bootstrap` creates the state files; default catalog moved to `config/templates.yml`
   (https URL). **Migration:** none for existing cores — files you already have stay; your own
@@ -46,6 +49,8 @@ decisions behind changes are in `docs/adr/`.
   content in git history or fold key decisions into `decisions.md`. (ADR 0005)
 
 ### Changed
+- `close` asks the human about every discrepancy with recorded knowledge; reusable artifacts
+  are assessed when created; moving a module onto a new template is described. (ADR 0013)
 - subprocess output is decoded as UTF-8 (Cyrillic paths and messages on Windows).
 - Every commit is pushed right away (`kc commit-push`, `auto:` commits); confirmation only for
   external modules and template/engine proposals. `--push` flag removed. Claude adapter hooks

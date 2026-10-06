@@ -12,6 +12,8 @@ Analyze the session and the modules it touched for structure that wants to chang
 `ecosystem/todo/` (`kind: candidate`) and raise the ripe ones with the human at `close`.
 
 ## Reusable artifact (script / command / skill) — assess BEFORE creating it
+This part runs **during** the session, the moment you are about to create one (see
+`AGENTS.md`); the rest of this skill runs at `close`.
 Decide whether it is specific to this module or useful to other modules / other people;
 whether something similar already exists; and whether it should merge into an existing
 tool-package. Recommend **extract now / defer / keep in module**. If deferred, create it in
@@ -52,8 +54,16 @@ files in media/; files over 20 MB in media/large/, which is not committed."). Th
 module repo must end up with **no ecosystem references** (see `docs/templates.md`). A
 format-template extracted from a stabilized module follows the same rules and may carry
 type-specific, model-agnostic tooling. Before publishing a template, pass the
-`docs/templates.md` checklist: run `kc check-template` (no ecosystem references) and confirm an
-assistant could build an adequate module from it standalone.
+`docs/templates.md` checklist: no ecosystem references, and an assistant could build an
+adequate module from it standalone. Set the new module's description:
+`kc set NAME description="what it holds and what goes there"`.
+
+## Move an existing module onto a new template
+A module cannot adopt a template as its `upstream` after the fact (unrelated git histories).
+When a template is extracted from a module, or an existing module should follow a template:
+create a new module from the template (`kc new-module`), move the content over in the
+template's format (a large task — follow *Large tasks* in `AGENTS.md`), then the human decides
+whether the old module becomes `frozen` or is removed (record it in `ecosystem/decisions.md`).
 
 ## Retire
 Propose `frozen` (read-only, keep) or `disconnected` (core stops interacting; the repo

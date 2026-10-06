@@ -28,9 +28,9 @@ modules are forked from it (the fork sets the template as `upstream`; see the fo
 
 ## Checklist (before publishing or extracting a template)
 
-1. **No ecosystem references:** `kc check-template <template-dir>` reports clean (review any
-   flagged lines — a module repo must not mention the core, registry, `kc`, the fork model,
-   or its own template-ness).
+1. **No ecosystem references:** read the template's files — none may mention the core, the
+   registry, `kc`, the fork model, or its own template-ness (a module opened alone would break
+   on such instructions).
 2. **Standalone adequacy:** `AGENTS.md` alone lets an assistant build an adequate module
    *without the core* — it explains, in tool-neutral terms, how to add notes (frontmatter +
    TL;DR), the folder structure, how to link, and how to keep `index.md` and `log.md`. If an

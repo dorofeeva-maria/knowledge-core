@@ -1,4 +1,4 @@
-"""Cross-repo mechanical ops: registry view, HOME, pull-all / update / detach, commit-push,
+"""Cross-repo mechanical ops: registry view, pull-all / update / detach, commit-push,
 push-all.
 
 Deterministic plumbing the skills (and the session-start hook) call. Git mechanics live in
@@ -38,36 +38,21 @@ def show_registry(core):
         here = "here" if (m["path"] and m["path"].exists()) else ("absent" if m["path"] else "no-path")
         flags = [m["status"]] + (["external"] if m["external"] else []) + (["private"] if m["private"] else [])
         print(f"  {m['name'].ljust(w)}  {here:7}  {' '.join(flags)}")
+        if m.get("description"):
+            print(f"  {' ' * w}  {m['description']}")
 
 
-# ---------------------------------------------------------------- HOME map
-def _module_desc(path):
+def module_description(path):
+    """Default description of a module: the first prose line of its README / overview / AGENTS."""
     if not path or not Path(path).exists():
         return ""
-    for fn in ("overview.md", "README.md", "AGENTS.md"):
+    for fn in ("README.md", "overview.md", "AGENTS.md"):
         f = Path(path) / fn
         if f.exists():
             s = maintain.summary_line(f.read_text(encoding="utf-8", errors="replace"))
             if s:
                 return s
     return ""
-
-
-def home(core):
-    mods, _ = C.resolve(core)
-    active = [m for m in mods if m["status"] != "disconnected"]
-    lines = ["<!-- auto-generated map of modules; regenerate with `kc home` -->", "", "# HOME", ""]
-    if not active:
-        lines.append("_No modules yet._")
-    for m in active:
-        flags = ([m["status"]] if m["status"] != "active" else []) \
-            + (["external"] if m["external"] else []) + (["private"] if m["private"] else [])
-        tag = f" _({', '.join(flags)})_" if flags else ""
-        desc = _module_desc(m["path"])
-        lines.append(f"- **{m['name']}**{tag}" + (f" — {desc}" if desc else ""))
-    (core / "ecosystem" / "HOME.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
-    G.auto_commit(core, ["ecosystem/HOME.md"], "regenerate HOME")
-    print(f"home: {len(active)} module(s) mapped")
 
 
 # ---------------------------------------------------------------- sync (pull)

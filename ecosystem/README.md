@@ -6,7 +6,6 @@ this README and `todo/README.md`; `kc bootstrap` creates the state files in your
 engine updates never touch them (ADR 0009).
 
 - `registry.yml` — canonical module facts (below).
-- `HOME.md` — one-screen map of every module (purpose, entry points): the front door.
 - `todo/` — pending work, one file per item (leftover inbox/drafts, candidates, adaptations,
   deferred tasks); walked through at session start. See `todo/README.md`.
 - `decisions.md` — decisions about the ecosystem (module created/split/frozen/detached,
@@ -49,7 +48,8 @@ Map of `modules:`, keyed by module name. Each entry has exactly these fields —
 
 ```yaml
 modules:
-  <name>:                 # key = module identity, used in HOME, todo and decisions
+  <name>:                 # key = module identity, used in todo and decisions
+    description: <text>   # what the module holds and what goes there — the map `kc registry` shows
     remote: <git-url>     # where to clone it on a new device and where to push; ~ = local-only, not pushed yet
     upstream: <git-url>   # the template it follows; ~ = none (bare or detached)
     external: false       # true = not ours / limited access (e.g. a work repo); gates writes
@@ -63,6 +63,9 @@ modules:
 
 Field semantics (what each value makes the core do):
 
+- **`description`** — one line: what the module holds and what belongs there. `kc registry`
+  prints it; it is the map the agent routes by. Filled from the module's README on creation;
+  change it with `kc set NAME description="…"`.
 - **`remote`** — a URL lets `bootstrap` clone the module and `close` push it. `~` (empty)
   means the module exists only locally for now; the core skips pushing it.
 - **`upstream`** — the format-template the module follows. Every device restores it as the
