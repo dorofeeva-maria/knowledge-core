@@ -118,7 +118,7 @@ def main(argv):
     elif cmd == "registry":
         repos.show_registry(_need_core())
     elif cmd == "pull-all":
-        repos.pull_all(_need_core())
+        return repos.pull_all(_need_core())
     elif cmd == "commit-push":
         all_repos = "--all" in rest
         rest = [a for a in rest if a not in ("--all", "--push")]
@@ -128,7 +128,7 @@ def main(argv):
             msg = rest[i + 1] if i + 1 < len(rest) else None
         if not msg:
             raise SystemExit("kc commit-push: -m MSG required")
-        repos.commit_push(_need_core(), msg, all_repos=all_repos)
+        return repos.commit_push(_need_core(), msg, all_repos=all_repos)
     elif cmd == "draft":
         from . import session
         session.capture(_need_core(), sid=_opt(rest, "--session"), force=True)
@@ -146,7 +146,7 @@ def main(argv):
             raise SystemExit("kc detach: NAME required (a module name or 'core')")
         return repos.detach(_need_core(), rest[0], yes="--yes" in rest)
     elif cmd == "push-all":
-        repos.push_all(_need_core())
+        return repos.push_all(_need_core())
     elif cmd == "todo":
         from . import todo
         return todo.run(_need_core())
