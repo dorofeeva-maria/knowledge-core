@@ -252,8 +252,8 @@ def _on_start(core, agent, ev):
         save_state(core, sid, st)
         set_current(core, {"session_id": sid, "transcript_path": st["transcript"], "agent": agent})
     from . import wrappers, repos, todo
+    repos.pull_all(core)                  # first, so wrappers are built from the updated canon
     wrappers.ensure_wrappers(core, agent)
-    repos.pull_all(core)
     todo.run(core)
     if sid:
         d = draft_path(core, sid)

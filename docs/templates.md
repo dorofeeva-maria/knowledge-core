@@ -47,5 +47,6 @@ The module repo must end up with zero ecosystem references. See the `emergence` 
 
 Do not invent process-type templates up front — a single generic one is usually pointless.
 Let a module's shape stabilize through real work, then extract the common shape into a template
-(`emergence` → "extract a format-template"). The engine ships only the `info` template as a
-starting point; process templates emerge from use.
+(`emergence` → "extract a format-template"). The engine's default catalog
+(`config/templates.yml`) lists a single template, `info`, which lives in its own repo; process
+templates emerge from use and go into your core's `ecosystem/templates.yml`.

@@ -6,6 +6,7 @@ regenerated from the canon on each session start, so they never drift. They are
 instance/device artifacts — gitignored, not committed.
 """
 import json
+from pathlib import Path
 from . import core as C
 from . import maintain
 
@@ -65,11 +66,19 @@ def ensure_wrappers(core, agent):
     written = []
     w = a.get("wrapper")
     if w:
-        for skill, desc in _skills(core):
+        skills = _skills(core)
+        for skill, desc in skills:
             path = core / w["path"].format(skill=skill)
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(w["body"].format(skill=skill, description=desc), encoding="utf-8")
             written.append(path.relative_to(core).as_posix())
+        # remove wrappers of skills that no longer exist (generated files only: same template)
+        keep = {(core / w["path"].format(skill=s)).resolve() for s, _ in skills}
+        marker = w["body"].split("{skill}")[-1].strip().splitlines()[-1].strip()
+        for old in (core / w["path"].format(skill="x")).parent.glob("*" + Path(w["path"]).suffix):
+            if old.resolve() not in keep and marker and marker in old.read_text(encoding="utf-8", errors="replace"):
+                old.unlink()
+                print(f"ensure-wrappers [{agent}]: removed stale {old.relative_to(core).as_posix()}")
     p = a.get("pointer")
     if p:
         (core / p["path"]).write_text(p["body"], encoding="utf-8")

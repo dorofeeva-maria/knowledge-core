@@ -81,7 +81,8 @@ background agents, so the session is not blocked), run it **now**, or **defer** 
   related notes share tags instead (`kc tags TAG`, vocabulary in `ecosystem/tags.yml`).
 - Privacy: details of a `private` module or a note tagged `private` never go into other modules
   (mention them only in general terms) or into anything public.
-- Write only within the current module; cross-module moves happen through the core.
+- Each piece of knowledge is written into the module it belongs to, in that module's own format.
+  Knowledge never moves between modules by copying files or linking: the core re-distills it.
 - Propose structural changes (new module, extraction, split) — the human decides.
 - Automatic (no approval): mechanical whitelist only. Content edits are gated.
 - Sessions run from the **core**; it may write into modules (except `external` ones,

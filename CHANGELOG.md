@@ -5,6 +5,10 @@ decisions behind changes are in `docs/adr/`.
 
 ## Unreleased
 
+### Fixed
+- Wrappers of removed skills are deleted; the start hook syncs repos before regenerating
+  wrappers; wording of the language override, the default catalog and the write rule.
+
 ### Added
 - Memory in plain files: `ecosystem/memory.md` (bootstrap) + modules' `memory.md`; AGENTS.md
   *Memory*; inbox rules for other people's messages. (ADR 0012)
