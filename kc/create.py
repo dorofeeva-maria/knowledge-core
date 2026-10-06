@@ -1,8 +1,8 @@
 """kc new-module / kc templates — create a module (optionally from a template) and register it.
 
 Module creation is user-driven (the assistant only proposes, per the emergence skill). The
-chosen template, if any, becomes the module's git `upstream` remote (fork model); the registry
-does not store it.
+chosen template, if any, becomes the module's `upstream` remote and is recorded in the registry
+so other devices can restore it (ADR 0003). Content lives on `main`.
 """
 import subprocess
 from pathlib import Path
@@ -55,8 +55,10 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
         if r.returncode != 0:
             raise SystemExit(f"kc new-module: clone failed: {r.stderr.strip()}")
         _git(dest, "remote", "rename", "origin", "upstream")
-        _git(dest, "checkout", "-b", "working")
-        print(f"forked {source} -> {dest} (upstream set, on 'working')")
+        if _git(dest, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() != "main":
+            _git(dest, "branch", "-m", "main")
+        _git(dest, "branch", "--unset-upstream")
+        print(f"forked {source} -> {dest} (template = upstream, content on 'main')")
     else:
         dest.mkdir(parents=True, exist_ok=True)
         _git(dest, "init", "-b", "main")
@@ -64,12 +66,14 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
             f"# {name} — module instructions\n\n"
             f"A self-contained module. Describe its purpose, structure, and rules here.\n"
             f"Notes use YAML frontmatter (title, type, updated); links are intra-module only.\n",
-            encoding="utf-8")
+            encoding="utf-8", newline="\n")
         _git(dest, "add", "AGENTS.md")
         _git(dest, "commit", "-m", "Initialize module")
         print(f"created bare module -> {dest}")
 
-    _register(core, name)
+    from .gitsync import prepare
+    prepare(dest)
+    _register(core, name, source)
     if (core / ".git").exists() and _git(core, "status", "--porcelain", "ecosystem/registry.yml").stdout.strip():
         _git(core, "add", "ecosystem/registry.yml")
         _git(core, "commit", "-m", f"register module {name}")
@@ -77,14 +81,15 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
     print(f"registered '{name}' and recorded its path for this device")
 
 
-def _register(core, name):
+def _register(core, name, upstream=None):
     yaml = C._yaml()
     f = core / "ecosystem" / "registry.yml"
     data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
     mods = data.get("modules") or {}
-    mods.setdefault(name, {"remote": None, "external": False, "status": "active", "private": False})
+    mods.setdefault(name, {"remote": None, "upstream": upstream, "external": False,
+                           "status": "active", "private": False})
     data["modules"] = mods
-    f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8", newline="\n")
 
 
 def _set_path(core, name, dest):
@@ -96,4 +101,4 @@ def _set_path(core, name, dest):
     f = core / "ecosystem" / "devices.local.yml"
     data = (yaml.safe_load(f.read_text(encoding="utf-8")) if f.exists() else {}) or {}
     data.setdefault(did, {}).setdefault("paths", {})[name] = str(dest)
-    f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8", newline="\n")

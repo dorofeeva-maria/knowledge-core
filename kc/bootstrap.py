@@ -10,6 +10,7 @@ import subprocess
 from pathlib import Path
 from . import core as C
 from . import wrappers
+from . import gitsync
 
 
 def _ask(prompt, default=None, yes=False):
@@ -31,7 +32,7 @@ def _ask_yn(prompt, default=True, yes=False):
 
 def _write(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
+    path.write_text(text, encoding="utf-8", newline="\n")
 
 
 def _load_yaml(path):
@@ -50,13 +51,13 @@ def install_launcher(core):
         launcher.write_text(
             f'@echo off\r\nset "KC_CORE={core}"\r\n'
             f'set "PYTHONPATH={core};%PYTHONPATH%"\r\npython -m kc %*\r\n',
-            encoding="utf-8")
+            encoding="utf-8", newline="\n")
     else:
         launcher = bindir / "kc"
         launcher.write_text(
             f'#!/bin/sh\nexport KC_CORE="{core}"\n'
             f'export PYTHONPATH="{core}:$PYTHONPATH"\nexec python3 -m kc "$@"\n',
-            encoding="utf-8")
+            encoding="utf-8", newline="\n")
         launcher.chmod(0o755)
     on_path = str(bindir) in os.environ.get("PATH", "").split(os.pathsep)
     return launcher, on_path
@@ -67,19 +68,17 @@ def _git(path, *args):
 
 
 def _wire_core(core, inst):
-    """Ensure the core fork is on `working` and has its `upstream` (engine) remote.
+    """Ensure the core is on `main` and has its `upstream` (engine) remote.
     Records an existing upstream URL into instance settings so other devices can re-add it."""
     if not (core / ".git").exists():
         return
-    if _git(core, "rev-parse", "--verify", "working").returncode != 0:
-        _git(core, "checkout", "-b", "working")
-    elif _git(core, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() != "working":
-        _git(core, "checkout", "working")
+    if _git(core, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() != "main":
+        print("  note: the core should be on branch 'main' (ADR 0003); switch with `git checkout main`")
     remotes = _git(core, "remote").stdout.split()
     up = inst.get("upstream")
     if up and "upstream" not in remotes:
         _git(core, "remote", "add", "upstream", up)
-    elif "upstream" in remotes and not up:
+    elif "upstream" in remotes and "upstream" not in inst:   # first device: learn the URL
         url = _git(core, "remote", "get-url", "upstream").stdout.strip()
         if url:
             inst["upstream"] = url
@@ -136,8 +135,7 @@ def run(core, device_id=None, agents=None, language=None, yes=False):
         if not dest.exists():
             if remote:
                 print(f"  cloning {remote} -> {dest}")
-                rc = subprocess.run(["git", "clone", "--branch", "working", remote, str(dest)]).returncode
-                if rc != 0 and subprocess.run(["git", "clone", remote, str(dest)]).returncode != 0:
+                if subprocess.run(["git", "clone", remote, str(dest)]).returncode != 0:
                     print(f"  clone failed — skipping '{name}'")
                     continue
             else:
@@ -145,6 +143,9 @@ def run(core, device_id=None, agents=None, language=None, yes=False):
                       f"can't set it up on this device; skipping")
                 paths.pop(name, None)
                 continue
+        if not ext and (dest / ".git").exists():
+            up = m.get("upstream") if "upstream" not in m or m.get("upstream") else gitsync.DETACHED
+            gitsync.prepare(dest, up)   # rerere + restore the template remote on this device
         paths[name] = p
     _dump_yaml(devices_path, devices)
 

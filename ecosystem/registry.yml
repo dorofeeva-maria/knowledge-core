@@ -1,4 +1,4 @@
 # Canonical module facts — read ONLY by the core. See README.md for field semantics.
-# The engine ships this empty; a core fork fills it on the `working` branch.
+# The engine ships this empty; a core fork fills it on its `main` branch.
 # Per-device absolute paths live in the gitignored device overlay, not here.
 modules: {}

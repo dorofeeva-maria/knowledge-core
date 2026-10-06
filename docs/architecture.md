@@ -33,17 +33,26 @@ nesting. The connective tissue is the core's device-aware registry.
 
 ## Fork-from-template model
 
-Applies to every repo created from one of our templates (the core from the engine; modules
-from format-templates; tool-packages; templates themselves):
+Applies to the core (forked from the engine) and to every module forked from a
+format-template (ADR 0003):
 
-- `main` mirrors the upstream template; it is never polluted with content.
-- `working` holds all real content; it is the default working branch.
-- At session start, for each such repo: `git pull upstream main --rebase` (rebases `working`
-  onto the fresh template) and fast-forwards `main`.
-- Improving the template: a `feature/*` branch cut from `main` (generic change only) → PR to
-  the upstream template → maintainer merges.
-- External / arbitrary repos are exempt: they stay on their own branches; the core adapts to
-  whatever they already have.
+- **One branch, `main`,** holds all content. Other branches are ignored by the core.
+- **Two remotes:** `origin` — your own repo, shared by your devices; `upstream` — the engine
+  or the template. A module's template URL is recorded in the registry (`upstream`), the
+  engine's in `ecosystem/instance.yml`, so every device restores the remote.
+- **Session start sync** (`kc pull-all`, run by the start hook): fetch → rebase onto
+  `origin/main` (other devices' work) → rebase onto `upstream/main` (template/engine updates
+  are always applied). History stays linear: the template first, your content on top.
+- Because an update rewrites history, pushes use `--force-with-lease` plus an
+  "includes origin" check; a device that missed the rewrite recovers with the next sync.
+- **An update that conflicts blocks that repo** until resolved (`kc update NAME`, with the
+  agent) or until the repo is detached from its template (`kc detach NAME`, warned first).
+  After an update is applied, the agent reviews the diff and proposes content adaptation
+  (`skills/update.md`). git rerere remembers resolved conflicts.
+- Improving the template: a `feature/*` branch cut from `upstream/main` (generic change only) →
+  PR to the template → maintainer merges.
+- External / arbitrary repos are exempt: the core only fast-forwards their current branch and
+  never pushes them.
 
 ## Registry, devices, config
 
@@ -90,8 +99,9 @@ an adapter still works via `AGENTS.md` (the universal fallback).
 
 ## Session lifecycle
 
-- **Start** (hook): for each repo, pull (fork model); then check `inbox/` and `drafts/` — if
-  anything is pending, it must be handled via `close` before new work.
+- **Start** (hook): sync every repo (fork model above; template/engine updates are applied and
+  reviewed via `skills/update.md`); then check `inbox/` and `drafts/` — if anything is pending,
+  it must be handled via `close` before new work.
 - **During**: a light draft in `drafts/`.
 - **`close`** (explicit, interactive, from the core): route knowledge into modules, reconcile
   conflicts (newer `updated` wins; genuine semantic conflicts go to the human), run emergence,

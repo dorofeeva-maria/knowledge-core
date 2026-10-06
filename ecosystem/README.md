@@ -2,7 +2,7 @@
 
 Core state — the orchestrator's **meta-knowledge about the ecosystem** (never domain
 knowledge). Read **only by the core**; modules never read these files. The engine ships
-them empty; a core fork fills them on the `working` branch.
+them empty; a core fork fills them on its `main` branch.
 
 - `registry.yml` — canonical module facts (below).
 - `HOME.md` — one-screen map of every module (purpose, entry points): the front door.
@@ -11,7 +11,7 @@ them empty; a core fork fills them on the `working` branch.
 - `journal.md` — human-readable record of what automatic/agent actions did (auditability).
 - `templates.yml` — catalog of module templates offered when creating a module (name →
   source + "when" hint). Engine ships defaults; add your own. A module's chosen template is
-  its git `upstream`, not stored in the registry.
+  recorded in its registry entry (`upstream`).
 
 Per-device absolute paths are **not** here; they live in the gitignored device overlay
 `devices.local.yml`, created by `bootstrap`.
@@ -25,6 +25,7 @@ Map of `modules:`, keyed by module name. Each entry has exactly these fields —
 modules:
   <name>:                 # key = module identity, used in HOME / log / candidates / journal
     remote: <git-url>     # where to clone it on a new device and where to push; ~ = local-only, not pushed yet
+    upstream: <git-url>   # the template it follows; ~ = none (bare or detached)
     external: false       # true = not ours / limited access (e.g. a work repo); gates writes
     write_zones: []       # only when external: paths the core may write to; [] = read-only
     status: active        # active | frozen | disconnected
@@ -35,6 +36,10 @@ Field semantics (what each value makes the core do):
 
 - **`remote`** — a URL lets `bootstrap` clone the module and `close` push it. `~` (empty)
   means the module exists only locally for now; the core skips pushing it.
+- **`upstream`** — the format-template the module follows. Every device restores it as the
+  module's `upstream` remote; `kc pull-all` rebases the module onto template updates. `~` = no
+  template: created bare, or detached with `kc detach NAME` (the remote is then removed on
+  every device). A missing key means "unknown" — the core leaves the remote alone.
 - **`external`** — `true` tells the core this repo is not ours: never write to it except
   within `write_zones`. `false` = ours, full write (subject to `status`).
 - **`write_zones`** — meaningful only with `external: true`. Lists the sub-paths the core
@@ -48,8 +53,7 @@ Field semantics (what each value makes the core do):
 - **`private`** — `true` makes the core keep the module's specifics out of unrelated
   cross-references and out of anything that could become public.
 
-Not stored here, on purpose: the fork's upstream template (lives in the module's own git
-config), per-device presence (device overlay path present or absent), and the module's
+Not stored here, on purpose: per-device presence (device overlay path present or absent), and the module's
 write language (the module's own setting; resolution order: module setting → `KC_LANGUAGE`
 in `.env` → `instance.yml` `language`).
 

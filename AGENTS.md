@@ -18,12 +18,32 @@ generated from here by `adapters/`.
 | close a session (route knowledge, reconcile, commit, push) | skill | `skills/close.md` |
 | process inbox / raw drop | skill | `skills/inbox.md` |
 | emergence (propose module / extraction / split) | skill | `skills/emergence.md` |
+| apply a template/engine update, adapt content | skill | `skills/update.md` |
 | index, lint, check | CLI | `kc index\|lint\|check` |
 | registry, pull-all, commit-push, push-all, check-drafts | CLI | `kc <cmd>` |
+| resolve an update / stop following a template | CLI | `kc update NAME`, `kc detach NAME` |
 | HOME map, compact-log, check-template | CLI | `kc home`, `kc compact-log`, `kc check-template` |
 | create a module / list templates | CLI | `kc new-module`, `kc templates` |
 | set up this device | CLI | `kc bootstrap` |
 | per-AI wrappers | CLI | `kc ensure-wrappers --agent NAME`, `kc add-agent NAME` |
+
+## Session start
+
+The start hook runs `kc pull-all` and `kc check-drafts`. Read their report before anything else:
+
+- `UPDATE CONFLICT` / `REBASE IN PROGRESS` — that repo is **blocked**: do not write to it until
+  the update is resolved or the repo is detached. Follow `skills/update.md`.
+- `UPDATE APPLIED` — a template/engine update landed; review it with `skills/update.md`.
+- `skipped (…)` — the repo was not synced; tell the human why.
+- pending inbox/drafts — handle them via `close` before new work.
+
+## Large tasks
+
+Before a task that is large — e.g. more than ~20 files, more than one module, or a
+template/engine adaptation — state its scale (files/modules touched, a rough token and time
+cost) and let the human choose: run it **in the background** (if your assistant can run
+background agents, so the session is not blocked), run it **now**, or **defer** it. Warn when
+deferring affects later work.
 
 ## Ground rules
 

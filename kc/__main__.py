@@ -17,9 +17,11 @@ Core-scoped (finds the core via KC_CORE or by searching upward):
   kc home                    regenerate ecosystem/HOME.md (the module map)
   kc templates               list the module-template catalog
   kc new-module NAME [--template T | --template-url URL | --no-template] [--path P]
-  kc pull-all                pull core + present modules (fork model; external = ff)
+  kc pull-all                sync core + present modules: origin, then template/engine updates
+  kc update NAME             apply a template/engine update interactively (NAME or "core")
+  kc detach NAME [--yes]     stop following the template/engine (NAME or "core"); warns first
   kc commit-push [--all] [--push] -m MSG   commit current module (or --all); push only with --push
-  kc push-all                push core + present modules that have unpushed commits
+  kc push-all                push core + present modules (force-with-lease; see ADR 0003)
   kc check-drafts            report pending inbox/ and drafts/
   kc ensure-wrappers --agent NAME   regenerate NAME's command wrappers from the canon
   kc add-agent NAME          install an assistant's wrappers + startup stub
@@ -122,6 +124,14 @@ def main(argv):
         if not msg:
             raise SystemExit("kc commit-push: -m MSG required")
         repos.commit_push(_need_core(), msg, all_repos=all_repos, do_push=do_push)
+    elif cmd == "update":
+        if not rest:
+            raise SystemExit("kc update: NAME required (a module name or 'core')")
+        return repos.update(_need_core(), rest[0])
+    elif cmd == "detach":
+        if not rest or rest[0].startswith("--"):
+            raise SystemExit("kc detach: NAME required (a module name or 'core')")
+        return repos.detach(_need_core(), rest[0], yes="--yes" in rest)
     elif cmd == "push-all":
         repos.push_all(_need_core())
     elif cmd == "check-drafts":

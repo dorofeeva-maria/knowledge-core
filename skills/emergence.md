@@ -35,10 +35,10 @@ When a promotion is accepted, suggest a **template**: read the catalog with `kc 
 match the theme to each entry's `when` hint, and recommend one. The human may **accept** it,
 decline templates entirely (**own rules** — a bare module), or give **their own template
 URL**. Then create it with `kc new-module NAME [--template T | --template-url URL |
---no-template]`. A chosen template becomes the module's git `upstream` (fork model). Never
+--no-template]`. A chosen template becomes the module's `upstream` (fork model, ADR 0003). Never
 create a module without the human's go-ahead.
 
-After `kc new-module`, work on the module's `working` branch: **clarify its purpose and
+After `kc new-module` (content on `main`): **clarify its purpose and
 structure with the user**, then rewrite the template's placeholders (AGENTS.md, README,
 starter notes) into the module's real identity and remove any leftover template text. The
 module repo must end up with **no ecosystem references** (see `docs/templates.md`). A

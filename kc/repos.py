@@ -1,37 +1,18 @@
-"""Cross-repo mechanical ops: registry view, pull-all, commit-push, check-drafts.
+"""Cross-repo mechanical ops: registry view, HOME, pull-all / update / detach, commit-push,
+push-all, check-drafts.
 
-Deterministic plumbing the `close` skill (and the session-start hook) call. Pushing is
-opt-in (`--push`) so nothing leaves the machine without an explicit decision.
+Deterministic plumbing the skills (and the session-start hook) call. Git mechanics live in
+gitsync.py. Pushing is opt-in (`--push` / `push-all`) so nothing leaves the machine without an
+explicit decision.
 """
-import subprocess
 from pathlib import Path
 from . import core as C
 from . import maintain
-
-
-def _git(path, *args):
-    return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True)
-
-
-def _last(s):
-    lines = (s or "").strip().splitlines()
-    return lines[-1] if lines else ""
-
-
-def _is_repo(path):
-    return bool(path) and (Path(path) / ".git").exists()
-
-
-def _dirty(path):
-    return bool(_git(path, "status", "--porcelain").stdout.strip())
-
-
-def _has_remote(path, name):
-    return name in _git(path, "remote").stdout.split()
+from . import gitsync as G
 
 
 def _repo_root(path):
-    r = _git(path, "rev-parse", "--show-toplevel")
+    r = G.git(path, "rev-parse", "--show-toplevel")
     return Path(r.stdout.strip()) if r.returncode == 0 else None
 
 
@@ -85,50 +66,96 @@ def home(core):
     print(f"home: {len(active)} module(s) mapped")
 
 
-# ---------------------------------------------------------------- pull
-def pull_one(path, external):
-    if not _is_repo(path):
-        return "absent"
-    if _dirty(path):
-        return "skipped (dirty)"
-    if external:  # their branches / upstream are not ours to touch
-        r = _git(path, "pull", "--ff-only")
-        return "ok (ff)" if r.returncode == 0 else f"fail: {_last(r.stderr)}"
-    msgs = []
-    if _has_remote(path, "upstream"):
-        r = _git(path, "pull", "upstream", "main", "--rebase")
-        if r.returncode != 0:
-            return f"fail (upstream rebase): {_last(r.stderr)}"
-        msgs.append("upstream rebased")
-    if _has_remote(path, "origin"):
-        r = _git(path, "pull", "--ff-only")
-        if r.returncode != 0:
-            return f"fail (origin ff): {_last(r.stderr)}"
-        msgs.append("origin ff")
-    return "ok (" + ", ".join(msgs) + ")" if msgs else "ok (no remotes)"
+# ---------------------------------------------------------------- sync (pull)
+def _core_upstream(core):
+    inst = C.load_instance(core)
+    if "upstream" in inst and not inst["upstream"]:
+        return G.DETACHED
+    return inst.get("upstream")
+
+
+def _targets(core, include_frozen=True, modules_only=False):
+    """[(name, path, external, upstream_url)] for the core + modules present on this device."""
+    out = [] if modules_only else [("core", core, False, lambda: _core_upstream(core))]
+    for m in C.resolve(core)[0]:
+        if m["status"] == "disconnected" or (m["status"] == "frozen" and not include_frozen):
+            continue
+        out.append((m["name"], m["path"], m["external"], m["upstream"]))
+    return [(n, p, ext, G.DETACHED if u == "detached" else u) for n, p, ext, u in out]
 
 
 def pull_all(core):
-    report = [("core", pull_one(core, False))]
-    mods, _ = C.resolve(core)
-    for m in mods:
-        if m["status"] == "disconnected":
-            continue
-        report.append((m["name"], pull_one(m["path"], m["external"])))
+    # the core first: its registry may change (new modules, detach) before modules are synced
+    report = [("core", G.sync(core, "core", False, lambda: _core_upstream(core)))]
+    report += [(n, G.sync(p, n, ext, up)) for n, p, ext, up in _targets(core, modules_only=True)]
     _print_report(report)
+    if any("UPDATE" in s or "CONFLICT" in s for _, s in report):
+        print("→ template/engine updates found: follow skills/update.md before working in those repos")
     return report
+
+
+def update(core, name):
+    """Interactive sync of one repo: an upstream conflict is left in progress to resolve."""
+    for n, p, ext, up in _targets(core):
+        if n == name:
+            if ext:
+                raise SystemExit(f"kc update: '{name}' is external — it has no template updates")
+            if G._rebase_in_progress(p):
+                files = G._unmerged(p)
+                if files:
+                    print(f"  {name}: still conflicted: {', '.join(files)}")
+                    return 1
+                ok, files = G.rebase(p, "rebase", "--continue")
+                print(f"  {name}: " + ("rebase finished — push with `kc push-all`" if ok
+                                       else f"conflicts in {', '.join(files)}"))
+                return 0 if ok else 1
+            print(f"  {name}: {G.sync(p, name, ext, up, interactive=True)}")
+            return 0
+    raise SystemExit(f"kc update: no repo '{name}' on this device")
+
+
+DETACH_WARNING = """Detaching '{name}' from its {what}:
+  - it stops receiving {what} updates (rules, structure, fixes) — permanently, unless you
+    re-add the upstream by hand;
+  - its content stays as is; future {what} changes will not be adapted into it;
+  - for the core: skills and kc stop evolving with the engine; you maintain them yourself.
+Re-run with --yes to detach."""
+
+
+def detach(core, name, yes=False):
+    is_core = name == "core"
+    what = "engine" if is_core else "template"
+    if not yes:
+        print(DETACH_WARNING.format(name=name, what=what))
+        return 1
+    path = core if is_core else next((m["path"] for m in C.resolve(core)[0] if m["name"] == name), None)
+    if path and G.is_repo(path):
+        if G._rebase_in_progress(path):
+            G.git(path, "rebase", "--abort")
+        if "upstream" in G.remotes(path):
+            G.git(path, "remote", "remove", "upstream")
+    yaml = C._yaml()
+    if is_core:
+        f = core / "ecosystem" / "instance.yml"
+        data = C.load_instance(core)
+        data["upstream"] = None
+    else:
+        f = core / "ecosystem" / "registry.yml"
+        data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        mods = data.get("modules") or {}
+        if name not in mods:
+            raise SystemExit(f"kc detach: no module '{name}' in registry")
+        mods[name] = {**(mods[name] or {}), "upstream": None}
+    f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8", newline="\n")
+    print(f"detached '{name}' from its {what} (upstream removed, recorded in {f.name})")
+    return 0
 
 
 # ---------------------------------------------------------------- commit / push
 def commit_push(core, message, all_repos=False, do_push=False):
     targets = []
     if all_repos:
-        targets.append(("core", core))
-        for m in C.resolve(core)[0]:
-            if m["external"] or m["status"] in ("disconnected", "frozen"):
-                continue
-            if m["path"]:
-                targets.append((m["name"], m["path"]))
+        targets = [(n, p) for n, p, ext, _ in _targets(core, include_frozen=False) if not ext and p]
     else:
         root = _repo_root(Path.cwd())
         if not root:
@@ -136,42 +163,28 @@ def commit_push(core, message, all_repos=False, do_push=False):
         targets.append((root.name, root))
     report = []
     for name, path in targets:
-        if not _is_repo(path):
+        if not G.is_repo(path):
             report.append((name, "absent"))
             continue
-        if not _dirty(path):
+        if not G.dirty(path):
             report.append((name, "nothing to commit"))
             continue
-        _git(path, "add", "-A")
-        r = _git(path, "commit", "-m", message)
+        G.git(path, "add", "-A")
+        r = G.git(path, "commit", "-m", message)
         if r.returncode != 0:
-            report.append((name, f"commit fail: {_last(r.stderr)}"))
+            report.append((name, f"commit fail: {G.last(r.stderr)}"))
             continue
-        if do_push and _has_remote(path, "origin"):
-            rp = _git(path, "push")
-            report.append((name, "committed+pushed" if rp.returncode == 0 else f"committed, push fail: {_last(rp.stderr)}"))
-        else:
-            report.append((name, "committed" + ("" if do_push else " (no push)")))
+        report.append((name, "committed" + (", " + G.push(path) if do_push else " (no push)")))
     _print_report(report)
     return report
 
 
 def push_all(core):
-    targets = [("core", core)]
-    for m in C.resolve(core)[0]:
-        if m["external"] or m["status"] in ("disconnected", "frozen"):
-            continue
-        if m["path"]:
-            targets.append((m["name"], m["path"]))
     report = []
-    for name, path in targets:
-        if not _is_repo(path):
-            report.append((name, "absent"))
-        elif not _has_remote(path, "origin"):
-            report.append((name, "no origin"))
-        else:
-            r = _git(path, "push")
-            report.append((name, "pushed" if r.returncode == 0 else f"fail: {_last(r.stderr)}"))
+    for name, path, ext, _ in _targets(core, include_frozen=False):
+        if ext:
+            continue
+        report.append((name, G.push(path) if G.is_repo(path) else "absent"))
     _print_report(report)
     return report
 

@@ -48,6 +48,13 @@ def load_registry(core):
     return data.get("modules") or {}
 
 
+def load_instance(core):
+    f = core / "ecosystem" / "instance.yml"
+    if not f.exists():
+        return {}
+    return _yaml().safe_load(f.read_text(encoding="utf-8")) or {}
+
+
 def load_devices(core):
     f = core / "ecosystem" / "devices.local.yml"
     if not f.exists():
@@ -57,7 +64,7 @@ def load_devices(core):
 
 def resolve(core):
     """(modules, device_id). Each module: name, path(Path|None), status, external,
-    write_zones, private, remote."""
+    write_zones, private, remote, upstream."""
     reg = load_registry(core)
     env = load_env(core)
     did = env.get("KC_DEVICE_ID")
@@ -74,5 +81,7 @@ def resolve(core):
             "write_zones": m.get("write_zones") or [],
             "private": bool(m.get("private", False)),
             "remote": m.get("remote"),
+            "upstream": m.get("upstream") if "upstream" not in m or m.get("upstream")
+                        else "detached",
         })
     return out, did

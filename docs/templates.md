@@ -18,7 +18,9 @@ modules are forked from it (the fork sets the template as `upstream`; see the fo
 - **Type-specific tooling is allowed and encouraged.** A template may carry model-agnostic
   scripts, commands, instructions, or automations useful for working with this kind of project
   (e.g. a `tools/` folder). Like all module content, they carry no ecosystem references.
-- **Fork model:** content on `working`, `main` mirrors the template.
+- **Fork model:** a module keeps its content on `main`; the template is its `upstream` and
+  template changes are rebased under the module's content. So publish changes that a module
+  can absorb; describe any change that needs module content adapted in the commit message.
 
 ## Checklist (before publishing or extracting a template)
 
@@ -32,8 +34,8 @@ modules are forked from it (the fork sets the template as `upstream`; see the fo
 
 ## Using a template (fork → first-use rewrite)
 
-`kc new-module` forks the template, sets `upstream`, and checks out `working`. Then, on
-`working`, the assistant **clarifies the new module's purpose and structure with the user** and
+`kc new-module` forks the template and sets it as `upstream` (content stays on `main`). Then the
+assistant **clarifies the new module's purpose and structure with the user** and
 rewrites the placeholders into the module's real identity, removing any leftover template text.
 The module repo must end up with zero ecosystem references. See the `emergence` skill.
 

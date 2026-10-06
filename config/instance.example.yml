@@ -1,4 +1,4 @@
-# Instance-level settings — committed in your core fork (working branch).
+# Instance-level settings — committed in your core (branch main).
 # Shared across all your devices. Copy to ../ecosystem/instance.yml when forking.
 
 # Default language for sessions and for writing into modules.

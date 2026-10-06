@@ -22,4 +22,5 @@
 - **inbox / drafts** — gitignored raw drop zone / session scratch; cleared by `close`.
 - **status** — a module's lifecycle in the registry: `active`, `frozen` (read-only), `disconnected` (ignored).
 - **ADR** — Architecture Decision Record (MADR-lite) for the engine's own evolution: why a choice was made; see `docs/adr/README.md`.
-- **fork model** — `main` mirrors the upstream template, `working` holds content; start pulls `upstream main --rebase`.
+- **fork model** — one branch `main` with your content on top of the template; remotes `origin` (yours) and `upstream` (engine/template); sync = rebase onto origin, then onto upstream (ADR 0003).
+- **detach** — stop following a template/engine: `kc detach NAME`; recorded as `upstream: ~`.
