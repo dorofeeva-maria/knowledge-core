@@ -2,12 +2,6 @@
 .env
 /ecosystem/devices.local.yml
 
-# Raw drop + session scratch (ignore contents, keep the folders)
-/inbox/*
-!/inbox/README.md
-/drafts/*
-!/drafts/README.md
-
 # Python
 __pycache__/
 *.pyc

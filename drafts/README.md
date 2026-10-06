@@ -1,7 +1,7 @@
 # drafts/
 
-Lightweight working notes for the current session — what was learned/decided and where it
-should go. Contents are **gitignored**.
+Working notes of the current session — what was learned or decided and where it should go.
+Contents are **committed** (the core is private), so they survive a device switch.
 
-`close` finalizes drafts into modules and clears them. If drafts remain at the next
-session start, the start hook requires running `close` before new work.
+`close` finalizes drafts into modules and clears them. Drafts still here at the next session
+start get a stub in `ecosystem/todo/` from `kc todo` and are offered in the todo walk-through.

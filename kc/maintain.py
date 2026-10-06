@@ -15,7 +15,7 @@ INDEX_HEADER = "<!-- auto-generated index — regenerate after adding/removing n
 # Terms that must not appear inside a module/template repo (it must read as standalone).
 ECO_TERMS = re.compile(
     r"\b(ecosystem|knowledge-core|registry|kc|KC_[A-Z]+|ensure-wrappers|add-agent|bootstrap|"
-    r"devices\.local|candidates\.md|journal\.md|upstream|core|fork)\b", re.I)
+    r"devices\.local|upstream|core|fork)\b", re.I)
 SCAN_SUFFIXES = (".md", ".txt", ".yml", ".yaml", ".py", ".sh", ".toml")
 
 

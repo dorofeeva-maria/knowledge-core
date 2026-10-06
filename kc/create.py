@@ -74,9 +74,8 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
     from .gitsync import prepare
     prepare(dest)
     _register(core, name, source)
-    if (core / ".git").exists() and _git(core, "status", "--porcelain", "ecosystem/registry.yml").stdout.strip():
-        _git(core, "add", "ecosystem/registry.yml")
-        _git(core, "commit", "-m", f"register module {name}")
+    from .gitsync import auto_commit
+    auto_commit(core, ["ecosystem/registry.yml"], f"register module {name}")
     _set_path(core, name, dest)
     print(f"registered '{name}' and recorded its path for this device")
 

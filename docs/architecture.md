@@ -11,8 +11,8 @@ isolation, usable with any assistant.
 - **Engine** (this repo, public) — skeleton + documentation + the `kc` CLI + skills + adapters.
   You fork it into a core; it never holds personal data.
 - **Core** — a fork of the engine. Holds no domain knowledge, only *meta-knowledge about
-  the ecosystem* plus the engine: the registry, the HOME map, the session log, the candidates
-  list, the change journal, and the engine's own ADRs.
+  the ecosystem* plus the engine: the registry (state of modules), the HOME map, the todo list
+  (pending work), the decisions log, and the engine's own ADRs. History is the git log.
 - **Module** — an independent git repo (knowledge or project). It knows nothing about the
   ecosystem and nothing about other modules; it can be any shape. It works standalone;
   orchestration is a bonus when a core is present.
@@ -20,7 +20,9 @@ isolation, usable with any assistant.
   depends on.
 - **Format-template** — a separate repo scaffolding a recurring kind of module; new modules
   are forked from it.
-- **Transient** — `inbox/` (raw drops) and `drafts/` (session scratch); gitignored, cleared by `close`.
+- **Transient** — `inbox/` (raw drops) and `drafts/` (session notes); committed in the
+  private core so they follow you across devices; cleared by `close`, leftovers become todo
+  items.
 
 There are no module *types* — all modules are equal. The only flag is **external** (a repo
 with limited access, e.g. a work repo: read it, write only in declared zones, or not at all).
@@ -100,23 +102,24 @@ an adapter still works via `AGENTS.md` (the universal fallback).
 ## Session lifecycle
 
 - **Start** (hook): sync every repo (fork model above; template/engine updates are applied and
-  reviewed via `skills/update.md`); then check `inbox/` and `drafts/` — if anything is pending,
-  it must be handled via `close` before new work.
+  reviewed via `skills/update.md`); then `kc todo` stubs leftover `inbox/`/`drafts/` files and
+  lists all pending work, which the agent walks through with the human — apply, defer or
+  reject each item, or defer everything (`skills/todo.md`).
 - **During**: a light draft in `drafts/`.
 - **`close`** (explicit, interactive, from the core): route knowledge into modules, reconcile
   conflicts (newer `updated` wins; genuine semantic conflicts go to the human), run emergence,
-  lint/index touched modules, record a log line + journal, commit per module, push on
+  lint/index touched modules, record decisions and todo items, commit per module, push on
   confirmation, clear processed raw (keep media). See `skills/close.md`.
 - Closing a session without `close` runs nothing heavy in the background.
 
 ## Automation & safety
 
 Automate the read-only / propose side; gate content writes. Mechanical, no-approval actions
-(index/HOME regen, intra-module link fixes, `updated` bumps, log line) may run automatically at
+(index/HOME regen, intra-module link fixes, `updated` bumps, todo stubs) may run automatically at
 session boundaries. Content edits and structural changes (new module, split, extraction) are
 proposed; the human decides. There is no background daemon — mechanical work runs at session
-start and `close`. A human-readable change journal plus git make every automatic action
-auditable and reversible.
+start and `close`. Every change `kc` makes on its own is a separate commit prefixed `auto:`, so
+automatic actions are auditable (`git log --grep '^auto:'`) and reversible (`git revert`).
 
 ## Element lifecycle (emergence)
 

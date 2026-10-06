@@ -9,13 +9,13 @@ description: Spot when to extract a tool-package, promote a theme to a module, o
 
 Analyze the session and the modules it touched for structure that wants to change. You only
 **propose**; the human creates, splits, or retires modules. Record proposals in
-`ecosystem/candidates.md` and raise the ripe ones with the human at `close`.
+`ecosystem/todo/` (`kind: candidate`) and raise the ripe ones with the human at `close`.
 
 ## Reusable artifact (script / command / skill) — assess BEFORE creating it
 Decide whether it is specific to this module or useful to other modules / other people;
 whether something similar already exists; and whether it should merge into an existing
 tool-package. Recommend **extract now / defer / keep in module**. If deferred, create it in
-the module and record it in `ecosystem/candidates.md` as pending extraction, then re-raise at
+the module and record it as a todo item (`kind: candidate`, pending extraction), then re-raise at
 `close`. Tool-packages are separate repos, depended on — they are not modules.
 
 ## Promote a theme to its own module

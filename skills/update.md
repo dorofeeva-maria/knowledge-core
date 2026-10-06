@@ -37,7 +37,7 @@ Do not write to that repo until this section is done.
 4. Otherwise describe the adaptation (what changes, where, why) and its scale. Apply the
    **Large tasks** rule from `AGENTS.md`: background / now / defer. When deferring, say what
    it affects (e.g. "new notes will follow the new layout, old ones won't until adapted") and
-   record it in `ecosystem/candidates.md` as `pending-adaptation` with the update range.
+   record it as a todo item (`kind: adaptation`, `source: <repo> OLD..NEW`; see `skills/todo.md`).
 5. Adaptations are content edits: make them with the human's approval, in the repo's own
    format, then lint/index as in `close`.
 

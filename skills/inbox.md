@@ -12,7 +12,7 @@ never committed as-is — only distilled notes land in modules.
 
 ## Steps
 
-1. List what's waiting: `kc check-drafts` (reports `inbox/` and `drafts/`).
+1. List what's waiting: the files in `inbox/` (and their items in `ecosystem/todo/`, if any).
 2. For each item: read it, fetch the link, or transcribe the media as needed. **Keep media
    originals** and store transcripts beside them — never delete media.
 3. Decide the target module and write the distilled knowledge there, exactly as in the

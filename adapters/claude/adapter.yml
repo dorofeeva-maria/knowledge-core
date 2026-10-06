@@ -28,4 +28,4 @@ startup:
       SessionStart:
         - hooks:
             - type: command
-              command: "kc ensure-wrappers --agent claude || true ; kc pull-all || true ; kc check-drafts || true"
+              command: "kc ensure-wrappers --agent claude || true ; kc pull-all || true ; kc todo || true"

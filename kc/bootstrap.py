@@ -94,9 +94,7 @@ def run(core, device_id=None, agents=None, language=None, yes=False):
         inst["language"] = _ask("Instance language (e.g. en, ru)", "en", yes) or "en"
     _wire_core(core, inst)
     _dump_yaml(inst_path, inst)
-    if (core / ".git").exists() and _git(core, "status", "--porcelain", "ecosystem/instance.yml").stdout.strip():
-        _git(core, "add", "ecosystem/instance.yml")
-        _git(core, "commit", "-m", "configure instance (language, upstream)")
+    gitsync.auto_commit(core, ["ecosystem/instance.yml"], "configure instance (language, upstream)")
 
     # 2. device id -> .env (gitignored, per-device)
     if not device_id:

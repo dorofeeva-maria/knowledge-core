@@ -1,5 +1,5 @@
 """Cross-repo mechanical ops: registry view, HOME, pull-all / update / detach, commit-push,
-push-all, check-drafts.
+push-all.
 
 Deterministic plumbing the skills (and the session-start hook) call. Git mechanics live in
 gitsync.py. Pushing is opt-in (`--push` / `push-all`) so nothing leaves the machine without an
@@ -63,6 +63,7 @@ def home(core):
         desc = _module_desc(m["path"])
         lines.append(f"- **{m['name']}**{tag}" + (f" — {desc}" if desc else ""))
     (core / "ecosystem" / "HOME.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    G.auto_commit(core, ["ecosystem/HOME.md"], "regenerate HOME")
     print(f"home: {len(active)} module(s) mapped")
 
 
@@ -147,7 +148,9 @@ def detach(core, name, yes=False):
             raise SystemExit(f"kc detach: no module '{name}' in registry")
         mods[name] = {**(mods[name] or {}), "upstream": None}
     f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8", newline="\n")
-    print(f"detached '{name}' from its {what} (upstream removed, recorded in {f.name})")
+    G.auto_commit(core, [f.relative_to(core).as_posix()], f"detach {name} from its {what}")
+    print(f"detached '{name}' from its {what} (upstream removed, recorded in {f.name}; "
+          f"add the reason to ecosystem/decisions.md)")
     return 0
 
 
@@ -187,23 +190,3 @@ def push_all(core):
         report.append((name, G.push(path) if G.is_repo(path) else "absent"))
     _print_report(report)
     return report
-
-
-# ---------------------------------------------------------------- drafts / inbox
-def check_drafts(core):
-    def items(name):
-        d = core / name
-        if not d.exists():
-            return []
-        return [f.name for f in d.iterdir() if f.name != "README.md" and not f.name.startswith(".")]
-
-    inbox, drafts = items("inbox"), items("drafts")
-    if not inbox and not drafts:
-        print("inbox/drafts: empty")
-        return 0
-    if inbox:
-        print(f"inbox:  {len(inbox)} item(s) — {', '.join(inbox[:5])}{'…' if len(inbox) > 5 else ''}")
-    if drafts:
-        print(f"drafts: {len(drafts)} item(s) — {', '.join(drafts[:5])}{'…' if len(drafts) > 5 else ''}")
-    print("→ run `close` to process before new work")
-    return 1

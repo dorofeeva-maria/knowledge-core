@@ -6,9 +6,14 @@ them empty; a core fork fills them on its `main` branch.
 
 - `registry.yml` — canonical module facts (below).
 - `HOME.md` — one-screen map of every module (purpose, entry points): the front door.
-- `candidates.md` — themes/scripts/processes proposed for their own module or tool-package.
-- `log.md` — one line per `close` (date, modules touched, key decisions).
-- `journal.md` — human-readable record of what automatic/agent actions did (auditability).
+- `todo/` — pending work, one file per item (leftover inbox/drafts, candidates, adaptations,
+  deferred tasks); walked through at session start. See `todo/README.md`.
+- `decisions.md` — decisions about the ecosystem (module created/split/frozen/detached,
+  pending item rejected), newest first.
+- `instance.yml` — instance settings shared by your devices: default `language`, the engine
+  URL (`upstream`).
+- History is git: the core's commits; automatic actions by `kc` are commits prefixed `auto:`
+  (`git log --grep '^auto:'`).
 - `templates.yml` — catalog of module templates offered when creating a module (name →
   source + "when" hint). Engine ships defaults; add your own. A module's chosen template is
   recorded in its registry entry (`upstream`).
@@ -23,7 +28,7 @@ Map of `modules:`, keyed by module name. Each entry has exactly these fields —
 
 ```yaml
 modules:
-  <name>:                 # key = module identity, used in HOME / log / candidates / journal
+  <name>:                 # key = module identity, used in HOME, todo and decisions
     remote: <git-url>     # where to clone it on a new device and where to push; ~ = local-only, not pushed yet
     upstream: <git-url>   # the template it follows; ~ = none (bare or detached)
     external: false       # true = not ours / limited access (e.g. a work repo); gates writes

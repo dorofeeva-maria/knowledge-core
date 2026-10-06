@@ -22,7 +22,7 @@ Core-scoped (finds the core via KC_CORE or by searching upward):
   kc detach NAME [--yes]     stop following the template/engine (NAME or "core"); warns first
   kc commit-push [--all] [--push] -m MSG   commit current module (or --all); push only with --push
   kc push-all                push core + present modules (force-with-lease; see ADR 0003)
-  kc check-drafts            report pending inbox/ and drafts/
+  kc todo                    pending work: stub leftover inbox/drafts files, list all items
   kc ensure-wrappers --agent NAME   regenerate NAME's command wrappers from the canon
   kc add-agent NAME          install an assistant's wrappers + startup stub
 
@@ -134,8 +134,9 @@ def main(argv):
         return repos.detach(_need_core(), rest[0], yes="--yes" in rest)
     elif cmd == "push-all":
         repos.push_all(_need_core())
-    elif cmd == "check-drafts":
-        return repos.check_drafts(_need_core())
+    elif cmd == "todo":
+        from . import todo
+        return todo.run(_need_core())
     elif cmd == "ensure-wrappers":
         agent = _opt(rest, "--agent")
         if not agent:

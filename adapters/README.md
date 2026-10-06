@@ -7,7 +7,7 @@ that assistant:
 - **wrapper** — a thin "slash command" per skill that points back at `skills/<name>.md`;
 - **pointer** — the assistant's canon entry file (e.g. `CLAUDE.md`) pointing at `AGENTS.md`;
 - **startup** — the session-start stub that re-runs `kc ensure-wrappers` (+ `pull-all`,
-  `check-drafts`) so wrappers regenerate from the canon on every start and never drift.
+  `todo`) so wrappers regenerate from the canon on every start and never drift.
 
 `bootstrap` asks which assistant(s) you use on this device and installs their stubs;
 `kc add-agent <name>` adds one later. Generated wrappers are **gitignored** — they are

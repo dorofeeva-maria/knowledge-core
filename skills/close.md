@@ -36,17 +36,18 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
 
 3. **Emergence.** Apply the `emergence` skill: spot a theme ripe for its own module, a
    reusable artifact to extract into a tool-package, or a module that should split. Record
-   proposals in `ecosystem/candidates.md` and raise the ripe ones with the human. **Propose
+   proposals as todo items (`kind: candidate`) and raise the ripe ones with the human. **Propose
    only — never create or delete modules yourself.**
 
 4. **Lint & index.** For each module you touched (and the core), run `kc lint <path>` and
    `kc index <path>`; fix broken intra-module links and stale indexes. Regenerate the
    core's `HOME.md` with `kc home` if the set of modules changed.
 
-5. **Record.** Append one line to `ecosystem/log.md` (date · modules touched · key
-   decisions/proposals). Note mechanical/automatic actions in `ecosystem/journal.md` so the
-   human can audit them. Decisions about the **engine itself** are not recorded here — those
-   become an ADR in the engine (see `docs/adr/README.md`).
+5. **Record.** Add decisions about the ecosystem taken this session (module created, split,
+   frozen or detached; a pending item rejected; a choice between real alternatives) to
+   `ecosystem/decisions.md`. Everything you deferred is a todo item (`skills/todo.md`). The
+   rest of the history is the commits. Decisions about the **engine itself** become an ADR in
+   the engine (see `docs/adr/README.md`).
 
 6. **Commit (per module).** In each touched repo (and the core) run
    `kc commit-push -m "<message>"` — a message describing what changed **in that module**,
@@ -55,11 +56,12 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
 
 7. **Push.** Ask the human to confirm, showing the commits. On yes, run `kc push-all`.
 
-8. **Clear.** Delete the drafts and inbox items you processed. **Keep media originals and
-   their transcripts** — do not delete media. Leave anything unresolved in place and say so.
+8. **Clear.** Delete the drafts and inbox items you processed, and their todo items if any.
+   **Keep media originals and their transcripts** — do not delete media. Anything unresolved
+   stays and becomes a todo item; say so.
 
 ## Rules
 - Mechanical steps go through `kc`; cognitive judgment is yours.
 - You are interactive here: content is written with the human present; structural changes and
   the push need explicit confirmation.
-- Unprocessed drafts/inbox must be handled before new work in the next session.
+- Leftover drafts/inbox become todo items at the next session start (`kc todo`).
