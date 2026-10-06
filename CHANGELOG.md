@@ -6,6 +6,8 @@ decisions behind changes are in `docs/adr/`.
 ## Unreleased
 
 ### Added
+- Shared tags: `ecosystem/tags.yml` vocabulary (created by bootstrap), `kc tags [TAG]`;
+  privacy by module flag or `private` note tag. (ADR 0011)
 - `kc set NAME key=value`; AGENTS.md *During the session* (write on request, one session per
   core); start hook warns about another active session. (ADR 0010)
 - `kc add-module NAME PATH` registers an existing repo (own or `--external`). (ADR 0009)

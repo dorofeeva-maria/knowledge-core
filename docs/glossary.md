@@ -22,6 +22,7 @@
 - **session draft** — `drafts/<date>-<session8>.md`, the raw transcript of an open session, captured by `kc` hooks (ADR 0006).
 - **inbox / drafts** — committed raw drop zone / session drafts in the core; cleared by `close`; leftovers become todo items.
 - **todo** — `ecosystem/todo/`: pending work, one file per item; walked through at session start (`kc todo`, `skills/todo.md`).
+- **tags** — kebab-case words in a note's frontmatter (`tags: [...]`); the shared vocabulary is `ecosystem/tags.yml`; `kc tags TAG` finds related notes across modules. `private` marks personal notes.
 - **decisions** — `ecosystem/decisions.md`: decisions about the ecosystem (not the engine).
 - **auto commit** — a commit `kc` makes on its own, prefixed `auto:`; the audit trail of automatic actions.
 - **status** — a module's lifecycle in the registry: `active`, `frozen` (read-only), `disconnected` (ignored).

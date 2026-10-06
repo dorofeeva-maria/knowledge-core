@@ -18,6 +18,9 @@ engine updates never touch them (ADR 0009).
   - **Options:** what was on the table
   - **Chosen:** what we do, and why
   ```
+- `tags.yml` — the shared tag vocabulary: `tags: {tag: meaning}`, kebab-case; `private` is
+  built in. Notes in modules carry `tags: [...]`; `kc tags [TAG]` lists counts and unknown tags,
+  or the notes with a tag across modules (ADR 0011).
 - `instance.yml` — instance settings shared by your devices: default `language`, the engine
   URL (`upstream`).
 - History is git: the core's commits; automatic actions by `kc` are commits prefixed `auto:`

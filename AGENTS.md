@@ -23,7 +23,7 @@ generated from here by `adapters/`.
 | a module's own format check (index, lint) | module | its registry `check` command |
 | registry, pull-all, commit-push, push-all, todo | CLI | `kc <cmd>` |
 | resolve an update / stop following a template | CLI | `kc update NAME`, `kc detach NAME` |
-| HOME map, check-template | CLI | `kc home`, `kc check-template` |
+| HOME map, tags, check-template | CLI | `kc home`, `kc tags [TAG]`, `kc check-template` |
 | create a module / add an existing repo / change its fields / list templates | CLI | `kc new-module`, `kc add-module`, `kc set`, `kc templates` |
 | set up this device | CLI | `kc bootstrap` |
 | per-AI wrappers | CLI | `kc ensure-wrappers --agent NAME`, `kc add-agent NAME` |
@@ -66,7 +66,10 @@ background agents, so the session is not blocked), run it **now**, or **defer** 
 
 ## Ground rules
 
-- Modules are independent and know nothing of the ecosystem; never add cross-module links.
+- Modules are independent and know nothing of the ecosystem; never add cross-module links —
+  related notes share tags instead (`kc tags TAG`, vocabulary in `ecosystem/tags.yml`).
+- Privacy: details of a `private` module or a note tagged `private` never go into other modules
+  (mention them only in general terms) or into anything public.
 - Write only within the current module; cross-module moves happen through the core.
 - Propose structural changes (new module, extraction, split) — the human decides.
 - Automatic (no approval): mechanical whitelist only. Content edits are gated.

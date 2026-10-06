@@ -90,11 +90,18 @@ Decisions about this ecosystem, newest first. Format: see `ecosystem/README.md`.
 """
 
 
+TAGS_HEADER = """# Shared tag vocabulary (ADR 0011): tag -> what it means. kebab-case.
+# `private` is built in. Add a tag here when you first use it in a note.
+tags: {}
+"""
+
+
 def ensure_state(core):
     """Create the core's state files the engine does not ship (ADR 0009). Returns new paths."""
     created = []
     eco = core / "ecosystem"
-    for rel, text in (("registry.yml", "modules: {}\n"), ("decisions.md", DECISIONS_HEADER)):
+    for rel, text in (("registry.yml", "modules: {}\n"), ("decisions.md", DECISIONS_HEADER),
+                      ("tags.yml", TAGS_HEADER)):
         f = eco / rel
         if not f.exists():
             _write(f, text)

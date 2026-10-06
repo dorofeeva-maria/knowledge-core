@@ -72,15 +72,21 @@ registry fields, mirrored as plain rules in the module's own `AGENTS.md` (ADR 00
 ## Access & privacy
 
 Every module may be **read** by the core, including private ones. A module is **written**
-only to itself; cross-module writes happen only through the core. Privacy is a
-*non-surfacing* rule (never expose a private module's specifics in unrelated or public places),
-not a read block. The public engine never contains personal content.
+only to itself; cross-module writes happen only through the core.
+
+Privacy is a *non-surfacing* rule, not a read block (ADR 0011). It applies to a whole module
+(registry `private: true`) or to single notes (tag `private`). Their details are never carried
+into other modules — mention them only in general terms ("there is a medical context") — and
+never into anything public (the engine, templates, published pages, a CV). The public engine
+never contains personal content.
 
 ## No cross-module links
 
 Links exist only *within* a module, in its own format. Modules never reference each other.
-Cross-module relationships, when worth keeping, are a note in the core — not a link in a
-file, not a maintained graph. Knowledge moves between modules by distilling it through the
+Cross-module relationships are expressed by **shared tags**: notes carry `tags: [...]` in
+their frontmatter, the core keeps the vocabulary (`ecosystem/tags.yml`) and finds related notes
+in any module with `kc tags TAG` (ADR 0011). A tag reads naturally in a module detached from
+the ecosystem. Knowledge moves between modules by distilling it through the
 core (a module writing into itself), never by linking. Link checking, where a module's
 format has one, is intra-module only.
 

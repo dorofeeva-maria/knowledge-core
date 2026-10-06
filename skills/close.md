@@ -27,6 +27,13 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
    topic per note) and write it **into that module's own repo**, in that module's format and
    following that module's own rules if it has any (read its `AGENTS.md` / `README`).
    - Prefer updating an existing note over creating a near-duplicate; bump its `updated`.
+   - Tags: if the module's notes use `tags`, tag cross-cutting entities (people, places, stack,
+     level, `private`) — not the folder or type. Use tags from `ecosystem/tags.yml`; add a new
+     one there with a one-line meaning. Run `kc tags TAG` to see related notes in other modules
+     and stay consistent with them (reconcile as in step 2, without linking).
+   - Privacy: never carry details of a `private` module or a note tagged `private` into
+     another module — a general mention only. Tag a note `private` when it holds personal
+     material (health, family, finances, other people's private messages).
    - Never write cross-module links. Never write into a `frozen` module. Never write into an
      `external` module outside its `write_zones`; with no zones, treat it as read-only. `kc`
      never commits in an external module: list what you wrote there so the human commits it
