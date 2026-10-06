@@ -30,6 +30,9 @@ generated from here by `adapters/`.
 
 ## Session start
 
+Read `ecosystem/memory.md` (facts about the human that hold everywhere). Before working in a
+module, read its own `memory.md` if it has one.
+
 The start hook runs `kc pull-all` and `kc todo`. Read their report before anything else:
 
 - `UPDATE CONFLICT` / `REBASE IN PROGRESS` — that repo is **blocked**: do not write to it until
@@ -55,6 +58,14 @@ Every commit is pushed right away (`kc commit-push`). `kc` never commits in exte
 - One session per core at a time: `kc` commits whole repos, so a second session in the same
   core would sweep up the first one's changes. The start hook warns if another session looks
   active.
+
+## Memory
+
+When the human corrects you or states a lasting fact or preference, record it (ADR 0012): if it
+belongs to one module's subject, in that module's `memory.md` (create it if the module has no
+such file and its format allows); otherwise in `ecosystem/memory.md`. One bullet: the fact,
+then **Why:**. Update or remove a fact that turns out wrong; never duplicate one in both places.
+Your assistant's built-in memory, if any, is not the source of truth.
 
 ## Large tasks
 

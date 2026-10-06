@@ -4,7 +4,9 @@ How anyone creates an ecosystem from this engine, and how to add it to another d
 
 ## Prerequisites (any OS)
 
-- **git** and **Python 3.9+**.
+- **git** and **Python 3.9+**. Commands below say `python3`; on Windows use `python` (there
+  `python3` is often a Microsoft Store stub). After bootstrap, the `kc` launcher picks the right
+  one, and module checks that start with `python` run with the same interpreter as `kc`.
 - **PyYAML**: `pip install pyyaml` (used by `kc`).
 - A directory on your `PATH` for the launcher — `~/.local/bin` on macOS/Linux,
   `%USERPROFILE%\.local\bin` on Windows. `kc bootstrap` writes the launcher there and tells

@@ -163,8 +163,13 @@ module is split when it stops being legible. The engine itself evolves through A
 
 ## Memory
 
-Stable facts about the user live in a separate memory tier, distinct from modules. Conceptually:
-episodic (drafts) → semantic (modules) → procedural (rules in `AGENTS.md`).
+Stable facts about the human and corrections to the assistant live in plain files any
+assistant reads (ADR 0012): `ecosystem/memory.md` in the core for facts that hold everywhere,
+and a module's own `memory.md` for facts that belong to its subject (e.g. "cite sources in APA
+style" belongs to a research module). Before writing a fact, the agent decides which
+module it belongs to; the core gets only what fits no module. An assistant's built-in memory is
+at most a cache. Conceptually: episodic (session drafts) → semantic (modules) → procedural
+(`AGENTS.md`, skills, module instructions) → memory (core and module `memory.md`).
 
 ## Non-goals
 

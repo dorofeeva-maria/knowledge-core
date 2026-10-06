@@ -96,12 +96,20 @@ tags: {}
 """
 
 
+MEMORY_HEADER = """# Memory
+
+Standing facts about the human that hold across all modules (ADR 0012) — read at session start.
+One bullet each: the fact, then **Why:** in a few words. A fact that belongs to one subject goes
+to that module's own `memory.md` instead.
+"""
+
+
 def ensure_state(core):
     """Create the core's state files the engine does not ship (ADR 0009). Returns new paths."""
     created = []
     eco = core / "ecosystem"
     for rel, text in (("registry.yml", "modules: {}\n"), ("decisions.md", DECISIONS_HEADER),
-                      ("tags.yml", TAGS_HEADER)):
+                      ("tags.yml", TAGS_HEADER), ("memory.md", MEMORY_HEADER)):
         f = eco / rel
         if not f.exists():
             _write(f, text)

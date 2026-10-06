@@ -25,7 +25,9 @@ module (step 4).
    links to it inside the module. Files over the size limit (`large_file_mb`, default 20 MB)
    go to `<media>/large/` — not committed, kept only on this device, not linked from notes.
    If the module has `media: false`, keep only the notes and delete the original.
-5. Ask the human when the destination is unclear, when an item is sensitive, or when it
-   concerns a person who is not clearly identified.
+5. Messages and chats with other people (e.g. friends): process them fully, quotes included,
+   and tag the notes `private`. Quote in the original language, word for word. Stop and ask
+   when it is unclear who a person is, or when the person is not someone the human knows
+   personally. Also ask when the destination is unclear.
 6. Remove the processed inbox items and their todo items. Hand off to `close` for reconcile /
    checks / commit, or perform those steps directly if you are closing now.

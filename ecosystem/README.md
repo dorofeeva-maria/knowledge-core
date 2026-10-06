@@ -21,6 +21,8 @@ engine updates never touch them (ADR 0009).
 - `tags.yml` — the shared tag vocabulary: `tags: {tag: meaning}`, kebab-case; `private` is
   built in. Notes in modules carry `tags: [...]`; `kc tags [TAG]` lists counts and unknown tags,
   or the notes with a tag across modules (ADR 0011).
+- `memory.md` — standing facts about the human that hold across all modules; module-specific
+  facts go to the module's own `memory.md` (ADR 0012).
 - `instance.yml` — instance settings shared by your devices: default `language`, the engine
   URL (`upstream`).
 - History is git: the core's commits; automatic actions by `kc` are commits prefixed `auto:`

@@ -6,6 +6,8 @@ decisions behind changes are in `docs/adr/`.
 ## Unreleased
 
 ### Added
+- Memory in plain files: `ecosystem/memory.md` (bootstrap) + modules' `memory.md`; AGENTS.md
+  *Memory*; inbox rules for other people's messages. (ADR 0012)
 - Shared tags: `ecosystem/tags.yml` vocabulary (created by bootstrap), `kc tags [TAG]`;
   privacy by module flag or `private` note tag. (ADR 0011)
 - `kc set NAME key=value`; AGENTS.md *During the session* (write on request, one session per
