@@ -89,6 +89,9 @@ background agents, so the session is not blocked), run it **now**, or **defer** 
   `private` module, or any `private`-tagged note) is pushed only to a private GitHub repo; if a
   push refuses (`NOT PUSHED …` because origin is public, non-GitHub, or unverifiable), stop and
   ask the human — never work around it (a work GitLab is not private). (ADR 0014)
+- Secrets: never repeat a secret (API key, token, password) back in your replies — acknowledge it
+  without echoing the value, so it does not enter the session transcript. `kc` also best-effort
+  masks obvious secrets when capturing the draft, but do not rely on that.
 - Each piece of knowledge is written into the module it belongs to, in that module's own format.
   Knowledge never moves between modules by copying files or linking: the core re-distills it.
 - Propose structural changes (new module, extraction, split) — the human decides.
