@@ -1,22 +1,36 @@
 # ecosystem/
 
 Core state — the orchestrator's **meta-knowledge about the ecosystem** (never domain
-knowledge). Read **only by the core**; modules never read these files. The engine ships
-them empty; a core fork fills them on its `main` branch.
+knowledge). Read **only by the core**; modules never read these files. The engine ships only
+this README and `todo/README.md`; `kc bootstrap` creates the state files in your core, so
+engine updates never touch them (ADR 0009).
 
 - `registry.yml` — canonical module facts (below).
 - `HOME.md` — one-screen map of every module (purpose, entry points): the front door.
 - `todo/` — pending work, one file per item (leftover inbox/drafts, candidates, adaptations,
   deferred tasks); walked through at session start. See `todo/README.md`.
 - `decisions.md` — decisions about the ecosystem (module created/split/frozen/detached,
-  pending item rejected), newest first.
+  pending item rejected), newest first. Entry format:
+
+  ```markdown
+  ## YYYY-MM-DD — short title
+  - **Where:** module(s) or core
+  - **Options:** what was on the table
+  - **Chosen:** what we do, and why
+  ```
 - `instance.yml` — instance settings shared by your devices: default `language`, the engine
   URL (`upstream`).
 - History is git: the core's commits; automatic actions by `kc` are commits prefixed `auto:`
   (`git log --grep '^auto:'`).
-- `templates.yml` — catalog of module templates offered when creating a module (name →
-  source + "when" hint). Engine ships defaults; add your own. A module's chosen template is
-  recorded in its registry entry (`upstream`).
+- `templates.yml` — optional: your own module templates (name → `source`, `when` hint,
+  `check`), same format as the engine's defaults in `config/templates.yml`; an entry here
+  overrides the engine's. A module's chosen template is recorded in its registry entry
+  (`upstream`).
+
+Modules enter the registry through `kc new-module` (a new repo) or `kc add-module NAME PATH`
+(an existing repo; `--external --write-zone P` for a repo that is not yours). Other fields are
+edited by hand (or by the agent) in `registry.yml`; `kc pull-all` reports any contract mismatch
+that results.
 
 Per-device absolute paths are **not** here; they live in the gitignored device overlay
 `devices.local.yml`, created by `bootstrap`.

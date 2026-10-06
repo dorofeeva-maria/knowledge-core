@@ -17,6 +17,8 @@ Core-scoped (finds the core via KC_CORE or by searching upward):
   kc templates               list the module-template catalog
   kc new-module NAME [--template T | --template-url URL | --no-template] [--path P]
                  [--remote URL] [--language L] [--private] [--media DIR|none] [--check CMD]
+  kc add-module NAME PATH [--external [--write-zone P]...] [--upstream URL] [--language L]
+                 [--private] [--media DIR|none] [--check CMD]   register an existing repo
   kc pull-all                sync core + present modules: origin, then template/engine updates
   kc update NAME             apply a template/engine update interactively (NAME or "core")
   kc detach NAME [--yes]     stop following the template/engine (NAME or "core"); warns first
@@ -95,6 +97,16 @@ def main(argv):
                           language=_opt(rest, "--language"),
                           private="--private" in rest,
                           media=_opt(rest, "--media"),
+                          check=_opt(rest, "--check"))
+    elif cmd == "add-module":
+        if len(rest) < 2 or rest[0].startswith("--"):
+            raise SystemExit("kc add-module: NAME PATH required")
+        zones = [rest[i + 1] for i, a in enumerate(rest[:-1]) if a == "--write-zone"]
+        from . import create
+        create.add_module(_need_core(), rest[0], rest[1],
+                          external="--external" in rest, write_zones=zones,
+                          upstream=_opt(rest, "--upstream"), language=_opt(rest, "--language"),
+                          private="--private" in rest, media=_opt(rest, "--media"),
                           check=_opt(rest, "--check"))
     elif cmd == "registry":
         repos.show_registry(_need_core())

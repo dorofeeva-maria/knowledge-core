@@ -10,10 +10,12 @@ from . import core as C
 
 
 def list_templates(core):
-    f = core / "ecosystem" / "templates.yml"
-    if not f.exists():
-        return {}
-    return (C._yaml().safe_load(f.read_text(encoding="utf-8")) or {}).get("templates") or {}
+    """Engine defaults (config/templates.yml) overlaid by the core's own (ecosystem/templates.yml)."""
+    out = {}
+    for f in (core / "config" / "templates.yml", core / "ecosystem" / "templates.yml"):
+        if f.exists():
+            out.update((C._yaml().safe_load(f.read_text(encoding="utf-8")) or {}).get("templates") or {})
+    return out
 
 
 def show_templates(core):
@@ -91,7 +93,7 @@ def _register(core, name, upstream=None, remote=None, language=None, private=Fal
               check=None):
     yaml = C._yaml()
     f = core / "ecosystem" / "registry.yml"
-    data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+    data = (yaml.safe_load(f.read_text(encoding="utf-8")) if f.exists() else {}) or {}
     mods = data.get("modules") or {}
     entry = {"remote": remote, "upstream": upstream, "external": False,
              "status": "active", "private": bool(private)}
@@ -104,6 +106,41 @@ def _register(core, name, upstream=None, remote=None, language=None, private=Fal
     mods.setdefault(name, entry)
     data["modules"] = mods
     f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8", newline="\n")
+
+
+def add_module(core, name, path, external=False, write_zones=(), upstream=None, language=None,
+               private=False, media=None, check=None):
+    """Register an existing repo as a module (ADR 0009). Its remote is read from `origin`, its
+    template from an existing `upstream` remote unless given. Reports contract problems."""
+    from .gitsync import is_repo, remotes, contract, auto_commit, prepare
+    dest = Path(path).expanduser().resolve()
+    if not is_repo(dest):
+        raise SystemExit(f"kc add-module: {dest} is not a git repository")
+    if name in C.load_registry(core):
+        raise SystemExit(f"kc add-module: '{name}' is already registered")
+    rs = remotes(dest)
+    remote = _git(dest, "remote", "get-url", "origin").stdout.strip() if "origin" in rs else None
+    if not upstream and "upstream" in rs and not external:
+        upstream = _git(dest, "remote", "get-url", "upstream").stdout.strip()
+    if not external:
+        prepare(dest)
+    _register(core, name, upstream, remote=remote, language=language, private=private,
+              media=media, check=check)
+    if external:
+        yaml = C._yaml()
+        f = core / "ecosystem" / "registry.yml"
+        data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        data["modules"][name].update(external=True, write_zones=list(write_zones))
+        data["modules"][name].pop("upstream", None)
+        f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8", newline="\n")
+    auto_commit(core, ["ecosystem/registry.yml"], f"add module {name}")
+    _set_path(core, name, dest)
+    print(f"registered existing repo '{name}' ({'external' if external else 'own'}) -> {dest}")
+    if not remote:
+        print("  no origin: the module stays on this device until it gets a remote")
+    if not external:
+        for problem in contract(dest, remote, upstream):
+            print(f"  MISMATCH: {problem} — fix it, or re-add the module as external")
 
 
 def _set_path(core, name, dest):

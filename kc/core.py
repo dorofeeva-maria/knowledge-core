@@ -1,19 +1,24 @@
 """Locate the core and load its registry / device overlay / .env.
 
-The core is the repo that holds `ecosystem/registry.yml`. These files are read
-ONLY here (by the core); modules never read them.
+The core is a checkout of the engine (`kc/` + `ecosystem/`). Its state files are created by
+`kc bootstrap`, never shipped by the engine (ADR 0009), and read only by the core.
 """
 import os
 from pathlib import Path
 
 
+def is_core(d):
+    """A core is a checkout of the engine: it has the `kc` package and an `ecosystem/` folder."""
+    return (Path(d) / "kc" / "__main__.py").exists() and (Path(d) / "ecosystem").is_dir()
+
+
 def find_core(start=None):
     env = os.environ.get("KC_CORE")
-    if env and (Path(env) / "ecosystem" / "registry.yml").exists():
+    if env and is_core(env):
         return Path(env).resolve()
     p = Path(start or Path.cwd()).resolve()
     for d in [p, *p.parents]:
-        if (d / "ecosystem" / "registry.yml").exists():
+        if is_core(d):
             return d
     return None
 
@@ -44,7 +49,10 @@ def _yaml():
 
 def load_registry(core):
     yaml = _yaml()
-    data = yaml.safe_load((core / "ecosystem" / "registry.yml").read_text(encoding="utf-8")) or {}
+    f = core / "ecosystem" / "registry.yml"
+    if not f.exists():
+        return {}
+    data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
     return data.get("modules") or {}
 
 

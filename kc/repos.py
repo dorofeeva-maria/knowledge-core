@@ -5,7 +5,9 @@ Deterministic plumbing the skills (and the session-start hook) call. Git mechani
 gitsync.py. Pushing is opt-in (`--push` / `push-all`) so nothing leaves the machine without an
 explicit decision.
 """
+import re
 import subprocess
+import sys
 from pathlib import Path
 from . import core as C
 from . import maintain
@@ -108,7 +110,8 @@ def _health(core):
             out.append((m["name"], f"MISMATCH: {problem} — fix it, make the module external, or defer (todo)"))
         if m["check"]:
             try:
-                r = subprocess.run(m["check"], shell=True, cwd=m["path"], capture_output=True,
+                cmd = re.sub(r"^python3? ", lambda _: f'"{sys.executable}" ', m["check"])  # same python everywhere
+                r = subprocess.run(cmd, shell=True, cwd=m["path"], capture_output=True,
                                    text=True, encoding="utf-8", errors="replace", timeout=120)
                 if r.returncode != 0:
                     out.append((m["name"], f"format issues — run `{m['check']}` in the module "

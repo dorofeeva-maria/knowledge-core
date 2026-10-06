@@ -7,8 +7,8 @@ description: Consolidate the session — route its draft into modules, reconcile
 
 # Skill: close
 
-Run at the end of a working session, from the **core** (a repo with
-`ecosystem/registry.yml`). You consolidate everything the session produced into the right
+Run at the end of a working session, from the **core** (the repo with `kc/` and
+`ecosystem/`). You consolidate everything the session produced into the right
 modules, keep the base consistent, and record what happened. You make the judgments and ask
 the human; you call `kc` for every mechanical/deterministic step — never reimplement it.
 

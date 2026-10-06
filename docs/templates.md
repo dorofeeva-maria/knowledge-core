@@ -2,7 +2,8 @@
 
 A **format-template** is a separate git repo that scaffolds a recurring *kind* of module. New
 modules are forked from it (the fork sets the template as `upstream`; see the fork model in
-`architecture.md`). The catalog of available templates is `ecosystem/templates.yml`.
+`architecture.md`). The catalog of available templates is the engine's `config/templates.yml` plus your core's
+`ecosystem/templates.yml`.
 
 ## Rules
 
@@ -18,7 +19,7 @@ modules are forked from it (the fork sets the template as `upstream`; see the fo
 - **The template owns its format tools.** If the format has rules a machine can check (an
   index, frontmatter, links, log size), ship the tools in the template (e.g. `tools/`) and
   describe them in its `AGENTS.md`, so a module opened alone can keep itself in shape. Declare
-  the read-only check command in the catalog (`ecosystem/templates.yml`, field `check`); the
+  the read-only check command in the catalog (field `check`); the
   core copies it into the registry of each new module and runs it (ADR 0008). Other
   model-agnostic scripts or automations are welcome too. No ecosystem references.
 - **Fork model:** a module keeps its content on `main`; the template is its `upstream` and

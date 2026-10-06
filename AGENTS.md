@@ -24,7 +24,7 @@ generated from here by `adapters/`.
 | registry, pull-all, commit-push, push-all, todo | CLI | `kc <cmd>` |
 | resolve an update / stop following a template | CLI | `kc update NAME`, `kc detach NAME` |
 | HOME map, check-template | CLI | `kc home`, `kc check-template` |
-| create a module / list templates | CLI | `kc new-module`, `kc templates` |
+| create a module / add an existing repo / list templates | CLI | `kc new-module`, `kc add-module`, `kc templates` |
 | set up this device | CLI | `kc bootstrap` |
 | per-AI wrappers | CLI | `kc ensure-wrappers --agent NAME`, `kc add-agent NAME` |
 

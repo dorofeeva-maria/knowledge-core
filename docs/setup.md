@@ -20,10 +20,12 @@ How anyone creates an ecosystem from this engine, and how to add it to another d
    `git remote add origin <your-core-url>`
 4. Bootstrap this device (records the engine URL, installs `kc` on `PATH`, generates your
    assistant's wrappers, records the device):
-   `python3 -m kc bootstrap`  → answer: language, device id, assistant(s).
+   `python3 -m kc bootstrap`  → answer: language, device id, assistant(s). It creates the core's
+   state files (`ecosystem/registry.yml`, `decisions.md`, `todo/`, `instance.yml`).
 5. Push your core (if you added an origin): `kc push-all`.
 6. Create modules as you need them:
-   `kc new-module NAME --template info`  (or `--no-template`, or `--template-url <url>`).
+   `kc new-module NAME --template info`  (or `--no-template`, or `--template-url <url>`),
+   or register repos you already have: `kc add-module NAME PATH` (`--external` if not yours).
 
 You now have a working, empty ecosystem. Everything is yours; nothing references the engine
 except the `upstream` remote.

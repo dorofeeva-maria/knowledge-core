@@ -6,6 +6,7 @@ decisions behind changes are in `docs/adr/`.
 ## Unreleased
 
 ### Added
+- `kc add-module NAME PATH` registers an existing repo (own or `--external`). (ADR 0009)
 - Module contract check in `kc pull-all` (`MISMATCH` lines) and the module's own format check
   (registry/catalog field `check`, `kc new-module --check`). (ADR 0008)
 - Module settings `language`, `media` (registry, optional); `kc new-module --remote --language
@@ -22,6 +23,10 @@ decisions behind changes are in `docs/adr/`.
 - AGENTS.md *Large tasks*: estimate scale, then background / now / defer. (ADR 0004)
 
 ### Removed
+- Engine no longer ships `ecosystem/registry.yml`, `HOME.md`, `decisions.md`, `templates.yml`;
+  `kc bootstrap` creates the state files; default catalog moved to `config/templates.yml`
+  (https URL). **Migration:** none for existing cores — files you already have stay; your own
+  catalog entries stay in `ecosystem/templates.yml`. (ADR 0009)
 - `kc index`, `kc lint`, `kc check`, `kc compact-log`, `skills/compact-log.md`, `kc push-external`:
   format tools now ship with templates (`tools/notes.py` in the info template); `kc` never
   commits in external modules. **Migration:** add `check: python tools/notes.py check` to

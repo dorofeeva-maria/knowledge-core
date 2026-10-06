@@ -29,8 +29,8 @@ never personal data.
 | `adapters/` | per-AI generators for command wrappers + startup stubs |
 | `docs/adr/` | architecture decision records (Nygard) for the engine itself |
 | `docs/` | the system canon (architecture, glossary) |
-| `ecosystem/` | core state the fork fills in: registry, HOME map, todo, decisions |
-| `config/` | example instance + device configuration |
+| `ecosystem/` | core state, created in your core by `kc bootstrap`: registry, HOME map, todo, decisions |
+| `config/` | example instance + device configuration; default template catalog |
 
 Format-templates (scaffolds for new modules) live in **separate repos**, not here.
 

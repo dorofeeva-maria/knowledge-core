@@ -84,6 +84,25 @@ def _wire_core(core, inst):
             inst["upstream"] = url
 
 
+DECISIONS_HEADER = """# Decisions
+
+Decisions about this ecosystem, newest first. Format: see `ecosystem/README.md`.
+"""
+
+
+def ensure_state(core):
+    """Create the core's state files the engine does not ship (ADR 0009). Returns new paths."""
+    created = []
+    eco = core / "ecosystem"
+    for rel, text in (("registry.yml", "modules: {}\n"), ("decisions.md", DECISIONS_HEADER)):
+        f = eco / rel
+        if not f.exists():
+            _write(f, text)
+            created.append(f"ecosystem/{rel}")
+    (eco / "todo").mkdir(parents=True, exist_ok=True)
+    return created
+
+
 def run(core, device_id=None, agents=None, language=None, yes=False):
     # 1. instance language -> ecosystem/instance.yml (committed, shared across devices)
     inst_path = core / "ecosystem" / "instance.yml"
@@ -94,7 +113,9 @@ def run(core, device_id=None, agents=None, language=None, yes=False):
         inst["language"] = _ask("Instance language (e.g. en, ru)", "en", yes) or "en"
     _wire_core(core, inst)
     _dump_yaml(inst_path, inst)
-    gitsync.auto_commit(core, ["ecosystem/instance.yml"], "configure instance (language, upstream)")
+    created = ensure_state(core)
+    gitsync.auto_commit(core, ["ecosystem/instance.yml"] + created,
+                        "configure instance (language, upstream)" + (", create core state" if created else ""))
 
     # 2. device id -> .env (gitignored, per-device)
     if not device_id:
