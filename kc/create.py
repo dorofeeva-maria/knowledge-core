@@ -30,11 +30,11 @@ def show_templates(core):
 
 
 def _git(path, *args):
-    return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True)
+    return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
 def new_module(core, name, template=None, template_url=None, no_template=False, path=None,
-               remote=None, language=None, private=False, media=None):
+               remote=None, language=None, private=False, media=None, check=None):
     dest = Path(path).expanduser() if path else (core.parent / "projects" / name)
     if dest.exists():
         raise SystemExit(f"kc new-module: {dest} already exists")
@@ -47,12 +47,13 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
             if not t:
                 raise SystemExit(f"kc new-module: no template '{template}' in catalog (see `kc templates`)")
             source = t.get("source")
+            check = check or t.get("check")
         if not source:
             raise SystemExit("kc new-module: choose --template NAME, --template-url URL, or --no-template")
 
     dest.parent.mkdir(parents=True, exist_ok=True)
     if source:
-        r = subprocess.run(["git", "clone", source, str(dest)], capture_output=True, text=True)
+        r = subprocess.run(["git", "clone", source, str(dest)], capture_output=True, text=True, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             raise SystemExit(f"kc new-module: clone failed: {r.stderr.strip()}")
         _git(dest, "remote", "rename", "origin", "upstream")
@@ -78,14 +79,16 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
     if remote:
         _git(dest, "remote", "add", "origin", remote)
         print(f"  origin -> {remote}: {push(dest)}")
-    _register(core, name, source, remote=remote, language=language, private=private, media=media)
+    _register(core, name, source, remote=remote, language=language, private=private, media=media,
+              check=check)
     from .gitsync import auto_commit
     auto_commit(core, ["ecosystem/registry.yml"], f"register module {name}")
     _set_path(core, name, dest)
     print(f"registered '{name}' and recorded its path for this device")
 
 
-def _register(core, name, upstream=None, remote=None, language=None, private=False, media=None):
+def _register(core, name, upstream=None, remote=None, language=None, private=False, media=None,
+              check=None):
     yaml = C._yaml()
     f = core / "ecosystem" / "registry.yml"
     data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
@@ -94,6 +97,8 @@ def _register(core, name, upstream=None, remote=None, language=None, private=Fal
              "status": "active", "private": bool(private)}
     if language:
         entry["language"] = language
+    if check:
+        entry["check"] = check
     if media is not None:
         entry["media"] = False if media in ("none", "false", "") else media
     mods.setdefault(name, entry)

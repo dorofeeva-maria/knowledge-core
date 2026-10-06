@@ -6,6 +6,8 @@ decisions behind changes are in `docs/adr/`.
 ## Unreleased
 
 ### Added
+- Module contract check in `kc pull-all` (`MISMATCH` lines) and the module's own format check
+  (registry/catalog field `check`, `kc new-module --check`). (ADR 0008)
 - Module settings `language`, `media` (registry, optional); `kc new-module --remote --language
   --private --media`; size limit `large_file_mb` (default 20): `kc` never commits bigger files;
   media goes to the module's media folder, large files to `<media>/large/`. (ADR 0007)
@@ -20,11 +22,16 @@ decisions behind changes are in `docs/adr/`.
 - AGENTS.md *Large tasks*: estimate scale, then background / now / defer. (ADR 0004)
 
 ### Removed
+- `kc index`, `kc lint`, `kc check`, `kc compact-log`, `skills/compact-log.md`, `kc push-external`:
+  format tools now ship with templates (`tools/notes.py` in the info template); `kc` never
+  commits in external modules. **Migration:** add `check: python tools/notes.py check` to
+  registry entries of info-template modules after they absorb the template update. (ADR 0008)
 - `ecosystem/log.md`, `ecosystem/journal.md`, `ecosystem/candidates.md`, `kc check-drafts`.
   **Migration:** move open candidates to todo items (`kind: candidate`); keep old log/journal
   content in git history or fold key decisions into `decisions.md`. (ADR 0005)
 
 ### Changed
+- subprocess output is decoded as UTF-8 (Cyrillic paths and messages on Windows).
 - Every commit is pushed right away (`kc commit-push`, `auto:` commits); confirmation only for
   external modules and template/engine proposals. `--push` flag removed. Claude adapter hooks
   replaced; kc-owned hook entries are replaced, not duplicated. **Migration:** run

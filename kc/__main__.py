@@ -4,12 +4,11 @@ Deterministic, model-agnostic plumbing that any agent or git hook can call.
 The cognitive work (what to write, where, reconciling) lives in skills/ and is done
 by an assistant; kc only does the deterministic parts the skills invoke.
 
-Module-scoped (run in any module):
-  kc index [DIR]              regenerate DIR/index.md
-  kc lint  [DIR] [-v]         frontmatter + broken intra-module [[links]] + index freshness
-  kc check [DIR]              index + lint -v
-  kc compact-log PATH [--keep N]   archive all but the last N log entries (default 50)
+Any repo:
   kc check-template [DIR]     flag ecosystem references in a template/module (must be standalone)
+
+A module's own format tools (index, lint, log compaction) ship with its template and are run
+through the registry field `check` (ADR 0008).
 
 Core-scoped (finds the core via KC_CORE or by searching upward):
   kc bootstrap [--device-id ID] [--agent NAME]... [--language L] [--yes]   set up this device
@@ -17,13 +16,12 @@ Core-scoped (finds the core via KC_CORE or by searching upward):
   kc home                    regenerate ecosystem/HOME.md (the module map)
   kc templates               list the module-template catalog
   kc new-module NAME [--template T | --template-url URL | --no-template] [--path P]
-                 [--remote URL] [--language L] [--private] [--media DIR|none]
+                 [--remote URL] [--language L] [--private] [--media DIR|none] [--check CMD]
   kc pull-all                sync core + present modules: origin, then template/engine updates
   kc update NAME             apply a template/engine update interactively (NAME or "core")
   kc detach NAME [--yes]     stop following the template/engine (NAME or "core"); warns first
   kc commit-push [--all] -m MSG   commit + push the current repo (or --all); external: commit only
   kc push-all                push core + present modules (force-with-lease; see ADR 0003)
-  kc push-external NAME      push an external module (only after the human confirms)
   kc draft [--session ID]    capture the session transcript into its draft now
   kc hook EVENT --agent NAME assistant hook entry: session-start | stop | pre-compact | session-end
   kc todo                    pending work: stub leftover inbox/drafts files, list all items
@@ -38,7 +36,7 @@ from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-from . import maintain, repos          # noqa: E402
+from . import maintain, repos          # noqa: E402,F401
 from . import core as C              # noqa: E402
 
 
@@ -64,25 +62,7 @@ def main(argv):
     verbose = "-v" in rest
     rest = [a for a in rest if a != "-v"]
 
-    if cmd == "index":
-        maintain.cmd_index(Path(rest[0]).resolve() if rest else Path.cwd())
-    elif cmd == "lint":
-        maintain.lint(Path(rest[0]).resolve() if rest else Path.cwd(), verbose)
-    elif cmd == "check":
-        root = Path(rest[0]).resolve() if rest else Path.cwd()
-        maintain.cmd_index(root)
-        maintain.lint(root, True)
-    elif cmd == "compact-log":
-        keep, args, i = 50, [], 0
-        while i < len(rest):
-            if rest[i] == "--keep" and i + 1 < len(rest):
-                keep = int(rest[i + 1]); i += 2
-            else:
-                args.append(rest[i]); i += 1
-        if not args:
-            raise SystemExit("kc compact-log: PATH required")
-        maintain.compact_log(args[0], keep)
-    elif cmd == "check-template":
+    if cmd == "check-template":
         return maintain.check_template(Path(rest[0]).resolve() if rest else Path.cwd())
     elif cmd == "bootstrap":
         agents = []
@@ -114,7 +94,8 @@ def main(argv):
                           remote=_opt(rest, "--remote"),
                           language=_opt(rest, "--language"),
                           private="--private" in rest,
-                          media=_opt(rest, "--media"))
+                          media=_opt(rest, "--media"),
+                          check=_opt(rest, "--check"))
     elif cmd == "registry":
         repos.show_registry(_need_core())
     elif cmd == "home":
@@ -131,10 +112,6 @@ def main(argv):
         if not msg:
             raise SystemExit("kc commit-push: -m MSG required")
         repos.commit_push(_need_core(), msg, all_repos=all_repos)
-    elif cmd == "push-external":
-        if not rest:
-            raise SystemExit("kc push-external: NAME required")
-        return repos.push_external(_need_core(), rest[0])
     elif cmd == "draft":
         from . import session
         session.capture(_need_core(), sid=_opt(rest, "--session"), force=True)

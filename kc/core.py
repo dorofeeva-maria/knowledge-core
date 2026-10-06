@@ -85,5 +85,6 @@ def resolve(core):
                         else "detached",
             "language": m.get("language"),
             "media": m.get("media", "media/"),
+            "check": m.get("check"),
         })
     return out, did

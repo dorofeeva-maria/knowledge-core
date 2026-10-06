@@ -8,3 +8,4 @@ templates:
   info:
     source: git@github.com:dorofeeva-maria/template-info.git
     when: A knowledge module — notes and references (entities / concepts / summaries).
+    check: python tools/notes.py check     # the template's own format check (ADR 0008)

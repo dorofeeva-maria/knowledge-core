@@ -18,7 +18,7 @@ _ENV = {**os.environ, "GIT_EDITOR": "true", "GIT_TERMINAL_PROMPT": "0"}
 
 
 def git(path, *args):
-    return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True, env=_ENV)
+    return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True, encoding="utf-8", errors="replace", env=_ENV)
 
 
 def last(s):
@@ -179,6 +179,38 @@ def auto_commit(core, paths, message, and_push=True):
     if r.returncode == 0 and and_push:
         push(core)
     return r.returncode == 0
+
+
+def _same_url(a, b):
+    def norm(u):
+        u = str(u or "")
+        if u and Path(u).exists():            # local path remotes: compare resolved paths
+            u = str(Path(u).resolve())
+        return u.rstrip("/").removesuffix(".git").replace("\\", "/").lower()
+    return norm(a) == norm(b)
+
+
+def contract(path, remote=None, upstream_url=None):
+    """What the core expects of its own (non-external) repos (ADR 0008): branch `main`, no
+    rebase stuck, `origin` = registry remote, `upstream` = registry upstream."""
+    if not is_repo(path):
+        return []
+    out = []
+    b = branch(path)
+    if b != BRANCH:
+        out.append(f"on branch '{b}', expected '{BRANCH}'")
+    if _rebase_in_progress(path):
+        out.append("rebase in progress")
+    rs = remotes(path)
+    if remote:
+        url = git(path, "remote", "get-url", "origin").stdout.strip() if "origin" in rs else ""
+        if not _same_url(url, remote):
+            out.append(f"origin is '{url or 'missing'}', registry says '{remote}'")
+    if isinstance(upstream_url, str) and upstream_url:
+        url = git(path, "remote", "get-url", "upstream").stdout.strip() if "upstream" in rs else ""
+        if not _same_url(url, upstream_url):
+            out.append(f"upstream is '{url or 'missing'}', registry says '{upstream_url}'")
+    return out
 
 
 def push(path):

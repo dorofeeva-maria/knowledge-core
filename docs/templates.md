@@ -15,9 +15,12 @@ modules are forked from it (the fork sets the template as `upstream`; see the fo
   `README`, a folder skeleton, maybe a starter note — all clearly meant to be replaced.
 - **Encode the type's structure** (folders, starter notes) so a new module of this kind starts
   shaped right. Keep it minimal; don't over-impose.
-- **Type-specific tooling is allowed and encouraged.** A template may carry model-agnostic
-  scripts, commands, instructions, or automations useful for working with this kind of project
-  (e.g. a `tools/` folder). Like all module content, they carry no ecosystem references.
+- **The template owns its format tools.** If the format has rules a machine can check (an
+  index, frontmatter, links, log size), ship the tools in the template (e.g. `tools/`) and
+  describe them in its `AGENTS.md`, so a module opened alone can keep itself in shape. Declare
+  the read-only check command in the catalog (`ecosystem/templates.yml`, field `check`); the
+  core copies it into the registry of each new module and runs it (ADR 0008). Other
+  model-agnostic scripts or automations are welcome too. No ecosystem references.
 - **Fork model:** a module keeps its content on `main`; the template is its `upstream` and
   template changes are rebased under the module's content. So publish changes that a module
   can absorb; describe any change that needs module content adapted in the commit message.

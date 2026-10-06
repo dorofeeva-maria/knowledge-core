@@ -37,6 +37,7 @@ modules:
     private: false        # true = never surface its details in unrelated/public places
     language: ru          # optional: language to write in; absent = session language
     media: media/         # optional: where source media goes; absent = media/; false = not kept
+    check: <command>      # optional: the module's own read-only format check, run in its root
 ```
 
 Field semantics (what each value makes the core do):
@@ -65,6 +66,11 @@ Field semantics (what each value makes the core do):
   PDFs, images, audio, video — with transcripts beside them; files over the size limit go to
   `<media>/large/`, which the module's `.gitignore` excludes. Absent: `media/`. `false`: the
   module keeps no media (only the distilled notes).
+
+- **`check`** — optional. A read-only command, run in the module's root, that checks the
+  module's format (for template modules it comes from the template catalog). Run by
+  `kc pull-all` and in `close`; a non-zero exit is reported as format issues (ADR 0008).
+- **`status: frozen`** with no path on this device — read it on demand from `remote` (web/API).
 
 Settings are optional, so any repo can be a module as is (ADR 0007). When a module is created
 or promoted, the agent also writes the same conventions in plain words into the module's own

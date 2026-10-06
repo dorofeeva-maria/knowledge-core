@@ -6,7 +6,7 @@ generated from here by `adapters/`.
 
 ## Two layers
 
-- **Mechanical → `kc` CLI.** Deterministic plumbing (lint, index, pull, commit/push,
+- **Mechanical → `kc` CLI.** Deterministic plumbing (sync, commit/push, todo, drafts,
   registry, wrapper generation). Call it; don't reimplement it. See `kc/`.
 - **Cognitive → skills.** Judgment-based operations are markdown instructions in `skills/`.
   Follow the relevant skill; it tells you when to call `kc`.
@@ -20,10 +20,10 @@ generated from here by `adapters/`.
 | emergence (propose module / extraction / split) | skill | `skills/emergence.md` |
 | apply a template/engine update, adapt content | skill | `skills/update.md` |
 | walk through pending work (todo) | skill | `skills/todo.md` |
-| index, lint, check | CLI | `kc index\|lint\|check` |
+| a module's own format check (index, lint) | module | its registry `check` command |
 | registry, pull-all, commit-push, push-all, todo | CLI | `kc <cmd>` |
 | resolve an update / stop following a template | CLI | `kc update NAME`, `kc detach NAME` |
-| HOME map, compact-log, check-template | CLI | `kc home`, `kc compact-log`, `kc check-template` |
+| HOME map, check-template | CLI | `kc home`, `kc check-template` |
 | create a module / list templates | CLI | `kc new-module`, `kc templates` |
 | set up this device | CLI | `kc bootstrap` |
 | per-AI wrappers | CLI | `kc ensure-wrappers --agent NAME`, `kc add-agent NAME` |
@@ -37,11 +37,13 @@ The start hook runs `kc pull-all` and `kc todo`. Read their report before anythi
 - `UPDATE APPLIED` — a template/engine update landed; review it with `skills/update.md`.
 - `skipped (…)` — the repo was not synced; tell the human why.
 - `todo: N pending` — walk through it with `skills/todo.md` (the human may defer all).
+- `MISMATCH: …` — a module breaks the contract (branch, remotes): propose to fix it, make it
+  external, or defer it as a todo item. `format issues` — propose fixing (not blocking).
 - `session: new | continuing` — the session's draft is captured automatically; you do not
   write it. `close` processes it.
 
-Every commit is pushed right away (`kc commit-push`), except external modules (confirm, then
-`kc push-external NAME`) and changes proposed to a template or the engine (confirm first).
+Every commit is pushed right away (`kc commit-push`). `kc` never commits in external modules
+(the human does), and changes proposed to a template or the engine need confirmation first.
 
 ## Large tasks
 

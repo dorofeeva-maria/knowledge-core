@@ -28,4 +28,4 @@ module (step 4).
 5. Ask the human when the destination is unclear, when an item is sensitive, or when it
    concerns a person who is not clearly identified.
 6. Remove the processed inbox items and their todo items. Hand off to `close` for reconcile /
-   lint / commit, or perform those steps directly if you are closing now.
+   checks / commit, or perform those steps directly if you are closing now.

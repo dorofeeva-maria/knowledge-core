@@ -5,6 +5,7 @@ Deterministic plumbing the skills (and the session-start hook) call. Git mechani
 gitsync.py. Pushing is opt-in (`--push` / `push-all`) so nothing leaves the machine without an
 explicit decision.
 """
+import subprocess
 from pathlib import Path
 from . import core as C
 from . import maintain
@@ -89,10 +90,32 @@ def pull_all(core):
     # the core first: its registry may change (new modules, detach) before modules are synced
     report = [("core", G.sync(core, "core", False, lambda: _core_upstream(core)))]
     report += [(n, G.sync(p, n, ext, up)) for n, p, ext, up in _targets(core, modules_only=True)]
+    report += _health(core)
     _print_report(report)
     if any("UPDATE" in s or "CONFLICT" in s for _, s in report):
         print("→ template/engine updates found: follow skills/update.md before working in those repos")
     return report
+
+
+def _health(core):
+    """Module contract and format checks (ADR 0008): problems only, as extra report lines."""
+    out = []
+    for m in C.resolve(core)[0]:
+        if m["external"] or m["status"] == "disconnected" or not G.is_repo(m["path"]):
+            continue
+        up = m["upstream"] if m["upstream"] != "detached" else None
+        for problem in G.contract(m["path"], m["remote"], up):
+            out.append((m["name"], f"MISMATCH: {problem} — fix it, make the module external, or defer (todo)"))
+        if m["check"]:
+            try:
+                r = subprocess.run(m["check"], shell=True, cwd=m["path"], capture_output=True,
+                                   text=True, encoding="utf-8", errors="replace", timeout=120)
+                if r.returncode != 0:
+                    out.append((m["name"], f"format issues — run `{m['check']}` in the module "
+                                           f"({G.last(r.stdout) or G.last(r.stderr)})"))
+            except subprocess.TimeoutExpired:
+                out.append((m["name"], f"format check timed out: {m['check']}"))
+    return out
 
 
 def update(core, name):
@@ -156,8 +179,8 @@ def detach(core, name, yes=False):
 
 # ---------------------------------------------------------------- commit / push
 def commit_push(core, message, all_repos=False):
-    """Commit and push right away (ADR 0006). External modules are committed but never pushed
-    here — the human confirms that with `kc push-external NAME`."""
+    """Commit and push right away (ADR 0006). Never in an external module: the human commits
+    there by its own rules (ADR 0008)."""
     ext_paths = {Path(p).resolve() for _, p, ext, _ in _targets(core) if ext and p}
     if all_repos:
         targets = [(n, p) for n, p, ext, _ in _targets(core, include_frozen=False) if not ext and p]
@@ -165,6 +188,9 @@ def commit_push(core, message, all_repos=False):
         root = _repo_root(Path.cwd())
         if not root:
             raise SystemExit("kc commit-push: not inside a git repo")
+        if root.resolve() in ext_paths:
+            raise SystemExit("kc commit-push: this is an external module — kc does not commit here; "
+                             "tell the human what you wrote so they commit it by the repo's rules")
         targets = [(root.name, root)]
     report = []
     for name, path in targets:
@@ -185,23 +211,9 @@ def commit_push(core, message, all_repos=False):
         if r.returncode != 0:
             report.append((name, f"commit fail: {G.last(r.stderr)}"))
             continue
-        if Path(path).resolve() in ext_paths:
-            report.append((name, "committed (external: confirm, then `kc push-external NAME`)"))
-        else:
-            report.append((name, "committed, " + G.push(path)))
+        report.append((name, "committed, " + G.push(path)))
     _print_report(report)
     return report
-
-
-def push_external(core, name):
-    for n, p, ext, _ in _targets(core, modules_only=True):
-        if n == name:
-            if not ext:
-                raise SystemExit(f"kc push-external: '{name}' is not external — it is pushed on commit")
-            r = G.git(p, "push")
-            print(f"  {name}: " + ("pushed" if r.returncode == 0 else f"fail: {G.last(r.stderr)}"))
-            return r.returncode
-    raise SystemExit(f"kc push-external: no module '{name}' on this device")
 
 
 def push_all(core):

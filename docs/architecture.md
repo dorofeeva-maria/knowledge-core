@@ -81,13 +81,31 @@ not a read block. The public engine never contains personal content.
 Links exist only *within* a module, in its own format. Modules never reference each other.
 Cross-module relationships, when worth keeping, are a note in the core — not a link in a
 file, not a maintained graph. Knowledge moves between modules by distilling it through the
-core (a module writing into itself), never by linking. Link-linting is therefore
-intra-module only.
+core (a module writing into itself), never by linking. Link checking, where a module's
+format has one, is intra-module only.
+
+## Module contract
+
+What the core expects of a module, so it can work with any repo (ADR 0008):
+
+- **Every module:** a git repo at the path recorded for this device. Nothing about its
+  content or format is required; settings in the registry are optional.
+- **Own modules** (not external): branch `main`; `origin` = registry `remote`; `upstream` =
+  registry `upstream`; no rebase left in progress. Checked by `kc pull-all` on every start; a
+  violation is reported as `MISMATCH` and the agent proposes to fix it, make the module
+  external, or defer it. Other branches are ignored.
+- **Format:** a module's format tools (index, lint, log compaction) ship with its template;
+  its registry `check` command (taken from the template catalog) runs on every start and in
+  `close`. Problems are reported, not blocking.
+- **External modules:** read; written only in `write_zones`; never committed, pushed or
+  rebased by `kc` — the human commits by that repo's rules.
+- **Frozen modules:** read only; never written. Without a local path they are read on demand
+  from their `remote` (web/API, e.g. `gh api` or raw file URLs).
 
 ## Two layers: mechanics vs judgment
 
-- **Mechanical → `kc` CLI.** Deterministic plumbing (pull, lint, index, registry, commit/push,
-  wrapper generation, bootstrap). Any assistant or git hook calls it; it is the source of truth
+- **Mechanical → `kc` CLI.** Deterministic plumbing (sync, registry, commit/push, todo,
+  session drafts, wrapper generation, bootstrap). Any assistant or git hook calls it; it is the source of truth
   for mechanics. See `kc/`.
 - **Cognitive → skills.** Judgment-based operations are AI-agnostic markdown instructions in
   `skills/`. An assistant follows the relevant skill, which tells it when to call `kc`.
@@ -113,7 +131,7 @@ an adapter still works via `AGENTS.md` (the universal fallback).
   continues (ADR 0006).
 - **`close`** (explicit, interactive, from the core): route knowledge into modules, reconcile
   conflicts (newer `updated` wins; genuine semantic conflicts go to the human), run emergence,
-  lint/index touched modules, record decisions and todo items, commit and push per module
+  run touched modules' checks, record decisions and todo items, commit and push per module
   (external modules only after confirmation), delete the processed draft and raw (keep
   media). See `skills/close.md`.
 - Ending a session without `close`: the end hook saves the rest of the transcript and warns;

@@ -39,7 +39,7 @@ Do not write to that repo until this section is done.
    it affects (e.g. "new notes will follow the new layout, old ones won't until adapted") and
    record it as a todo item (`kind: adaptation`, `source: <repo> OLD..NEW`; see `skills/todo.md`).
 5. Adaptations are content edits: make them with the human's approval, in the repo's own
-   format, then lint/index as in `close`.
+   format, then run the module's checks as in `close`.
 
 ## C. Push
 

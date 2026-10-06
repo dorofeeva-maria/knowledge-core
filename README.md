@@ -43,5 +43,4 @@ device id, assistant), then `kc new-module NAME --template info`. Prerequisites:
 
 ## Status
 
-Early scaffold. `kc index|lint|check` operate on a single module. Cross-repo
-subcommands and the bootstrap flow are being built incrementally.
+Working draft under active design; see `CHANGELOG.md` and `docs/adr/` for what changed and why.

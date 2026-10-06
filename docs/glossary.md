@@ -16,9 +16,9 @@
 - **canon** — the AI-agnostic instructions: `AGENTS.md` + `skills/`.
 - **wrapper** — a per-assistant pointer to a skill, generated from the canon by an adapter.
 - **adapter** — `adapters/<assistant>/adapter.yml`; how to render wrappers + startup stub for one assistant.
-- **skill** — a markdown instruction for a cognitive operation (`close`, `inbox`, `emergence`, `update`, `todo`, `compact-log`).
+- **skill** — a markdown instruction for a cognitive operation (`close`, `inbox`, `emergence`, `update`, `todo`).
 - **kc** — the mechanical CLI (deterministic plumbing).
-- **close** — the session-consolidation skill: flush draft → route → reconcile → emergence → lint → record → commit+push → clear.
+- **close** — the session-consolidation skill: flush draft → route → reconcile → emergence → module checks → record → commit+push → clear.
 - **session draft** — `drafts/<date>-<session8>.md`, the raw transcript of an open session, captured by `kc` hooks (ADR 0006).
 - **inbox / drafts** — committed raw drop zone / session drafts in the core; cleared by `close`; leftovers become todo items.
 - **todo** — `ecosystem/todo/`: pending work, one file per item; walked through at session start (`kc todo`, `skills/todo.md`).
