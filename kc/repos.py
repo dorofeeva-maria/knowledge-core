@@ -54,6 +54,16 @@ def _print_report(report):
         print(f"  {n.ljust(w)}  {s}")
 
 
+_FAIL_MARKERS = ("fail", "not pushed", "conflict", "rebase in progress", "fetch failed",
+                 "sync skipped", "commit fail")
+
+
+def _failed(report):
+    """Exit code 1 if any repo's status is a real failure (push/sync/conflict/update), so hooks
+    and callers see it — a plain 'skipped (uncommitted)' or 'nothing to commit' is not a failure."""
+    return 1 if any(any(m in s.lower() for m in _FAIL_MARKERS) for _, s in report) else 0
+
+
 # ---------------------------------------------------------------- registry
 def show_registry(core):
     mods, did = C.resolve(core)
@@ -110,7 +120,7 @@ def pull_all(core):
     _print_report(report)
     if any("UPDATE" in s or "CONFLICT" in s for _, s in report):
         print("→ template/engine updates found: follow skills/update.md before working in those repos")
-    return report
+    return _failed(report)
 
 
 def _health(core):
@@ -230,7 +240,7 @@ def commit_push(core, message, all_repos=False):
             continue
         report.append((name, "committed, " + G.push(path, _needs_private_origin(core, path))))
     _print_report(report)
-    return report
+    return _failed(report)
 
 
 def push_all(core):
@@ -240,4 +250,4 @@ def push_all(core):
             continue
         report.append((name, G.push(path, _needs_private_origin(core, path)) if G.is_repo(path) else "absent"))
     _print_report(report)
-    return report
+    return _failed(report)

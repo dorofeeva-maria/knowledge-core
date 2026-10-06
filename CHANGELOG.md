@@ -14,6 +14,11 @@ decisions behind changes are in `docs/adr/`.
   lines) before writing; `AGENTS.md` tells the assistant not to echo secrets back. (finding B10)
 
 ### Fixed
+- `kc pull-all` / `commit-push` / `push-all` exit non-zero on a real failure (push rejected,
+  conflict, rebase in progress, fetch/network) instead of always `0`; push failures are classified
+  (branch protection / non-fast-forward / permission / network) instead of always "someone pushed
+  meanwhile"; a failed fetch is reported as such, not as a `CONFLICT`; network git ops (fetch/pull/
+  push) have a 60 s timeout so they never hang. (finding E1)
 - Wrappers of removed skills are deleted; the start hook syncs repos before regenerating
   wrappers; wording of the language override, the default catalog and the write rule.
 

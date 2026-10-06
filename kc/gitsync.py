@@ -16,11 +16,16 @@ import subprocess
 from pathlib import Path
 
 BRANCH = "main"
+NET_TIMEOUT = 60          # seconds for network git ops (fetch / pull / push), so they never hang
 _ENV = {**os.environ, "GIT_EDITOR": "true", "GIT_TERMINAL_PROMPT": "0"}
 
 
-def git(path, *args):
-    return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True, encoding="utf-8", errors="replace", env=_ENV)
+def git(path, *args, timeout=None):
+    try:
+        return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", env=_ENV, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(list(args), 124, "", f"timed out after {timeout}s")
 
 
 def last(s):
@@ -108,17 +113,22 @@ def sync(path, name, external=False, upstream_url=None, interactive=False):
     b = branch(path)
     if b != BRANCH:
         return f"skipped (on branch '{b}', expected '{BRANCH}')"
-    git(path, "fetch", "--all", "--prune", "--quiet")
+    fr = git(path, "fetch", "--all", "--prune", "--quiet", timeout=NET_TIMEOUT)
+    if fr.returncode != 0:
+        return f"sync skipped (fetch failed: {last(fr.stderr) or 'network?'})"
     msgs = []
     if "origin" in remotes(path) and has_ref(path, f"refs/remotes/origin/{BRANCH}"):
-        ok, files = rebase(path, "pull", "--rebase", "origin", BRANCH)
+        ok, files = rebase(path, "rebase", f"origin/{BRANCH}")   # already fetched; separates network from conflict
         if not ok:
             git(path, "rebase", "--abort")
             return (f"CONFLICT with origin ({', '.join(files[:3])}) — resolve by hand: "
-                    f"git -C {path} pull --rebase origin {BRANCH}")
+                    f"git -C {path} rebase origin/{BRANCH}")
         msgs.append("origin")
     prepare(path, upstream_url() if callable(upstream_url) else upstream_url)
-    git(path, "fetch", "upstream", "--quiet") if "upstream" in remotes(path) else None
+    if "upstream" in remotes(path):
+        ur = git(path, "fetch", "upstream", "--quiet", timeout=NET_TIMEOUT)
+        if ur.returncode != 0:
+            msgs.append(f"upstream fetch failed ({last(ur.stderr) or 'network?'})")
     if "upstream" in remotes(path) and has_ref(path, f"refs/remotes/upstream/{BRANCH}"):
         up = f"upstream/{BRANCH}"
         if git(path, "merge-base", "--is-ancestor", up, "HEAD").returncode != 0:
@@ -259,6 +269,20 @@ def origin_privacy(path):
     return _gh_visibility(owner_repo) or "unknown-github"
 
 
+def _classify_push(stderr):
+    s = (stderr or "").lower()
+    if "protected branch" in s or ("protected" in s and "rejected" in s):
+        return "rejected by branch protection — open a PR instead"
+    if "fetch first" in s or "non-fast-forward" in s or "behind" in s:
+        return "someone pushed meanwhile; run `kc pull-all`, then push again"
+    if "permission" in s or "denied" in s or "authentication failed" in s or "403" in s:
+        return "permission denied — check your access (`gh auth status`)"
+    if ("could not resolve" in s or "timed out" in s or "timeout" in s
+            or "unable to access" in s or "network" in s):
+        return "network error — check your connection, then retry"
+    return last(stderr) or "push failed"
+
+
 def push(path, private_required=False):
     if "origin" not in remotes(path):
         return "no origin"
@@ -281,10 +305,8 @@ def push(path, private_required=False):
         # 'local' or 'private' → safe
     if not _includes_origin(path):
         return "not pushed: origin has commits you have not synced — run `kc pull-all` first"
-    r = git(path, "push", "--force-with-lease", "-u", "origin", BRANCH)
-    if r.returncode == 0:
-        return "pushed"
-    return f"fail: {last(r.stderr)} — someone pushed meanwhile; run `kc pull-all`, then push again"
+    r = git(path, "push", "--force-with-lease", "-u", "origin", BRANCH, timeout=NET_TIMEOUT)
+    return "pushed" if r.returncode == 0 else f"fail: {_classify_push(r.stderr)}"
 
 
 def _includes_origin(path):
