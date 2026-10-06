@@ -198,6 +198,7 @@ def hook(core, event, agent):
     if event == "stop":
         every_turns, every_min = _settings(core)
         st["turns"] = st.get("turns", 0) + 1
+        st["last_seen"] = time.time()
         save_state(core, sid, st)
         due = st["turns"] >= every_turns or time.time() - st.get("last_capture", 0) >= every_min * 60
         if due:
@@ -208,6 +209,9 @@ def hook(core, event, agent):
         return 0
     if event == "session-end":
         capture(core, sid, force=True)
+        st = load_state(core, sid)
+        st["ended"] = True
+        save_state(core, sid, st)
         d = draft_path(core, sid)
         if d.exists():
             sys.stderr.write("Session ended without `close`: its transcript is saved in "
@@ -217,13 +221,34 @@ def hook(core, event, agent):
     return 0
 
 
+ACTIVE_MINUTES = 30
+
+
+def _other_live_session(core, sid):
+    """One session at a time per core (ADR 0010): is another one still running here?"""
+    prev = current(core).get("session_id")
+    if not prev or prev == sid:
+        return None
+    st = load_state(core, prev)
+    if st.get("ended") or time.time() - st.get("last_seen", 0) > ACTIVE_MINUTES * 60:
+        return None
+    return prev
+
+
 def _on_start(core, agent, ev):
     sid = ev.get("session_id")
+    other = _other_live_session(core, sid) if sid else None
+    if other:
+        print(f"WARNING: another session ({other[:8]}) was active in this core in the last "
+              f"{ACTIVE_MINUTES} minutes. Run one session per core at a time: close the other one "
+              f"first, or work elsewhere — kc commits everything in a repo.")
     if sid:
         st = load_state(core, sid)
         st.setdefault("offset", 0)
         st.update(agent=agent, transcript=ev.get("transcript_path") or st.get("transcript"))
         st.setdefault("last_capture", time.time())
+        st["last_seen"] = time.time()
+        st.pop("ended", None)
         save_state(core, sid, st)
         set_current(core, {"session_id": sid, "transcript_path": st["transcript"], "agent": agent})
     from . import wrappers, repos, todo

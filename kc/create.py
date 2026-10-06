@@ -143,6 +143,58 @@ def add_module(core, name, path, external=False, write_zones=(), upstream=None, 
             print(f"  MISMATCH: {problem} — fix it, or re-add the module as external")
 
 
+SETTABLE = {"remote", "status", "private", "external", "write_zones", "language", "media", "check"}
+
+
+def set_fields(core, name, pairs):
+    """`kc set NAME key=value ...` — change registry fields of a module, with side effects
+    (ADR 0010): `remote` also points the module's `origin` at it and pushes. Values: `~` or
+    `none` clear a field; `true`/`false`; `write_zones` is comma-separated."""
+    from .gitsync import is_repo, remotes, push, auto_commit
+    yaml = C._yaml()
+    f = core / "ecosystem" / "registry.yml"
+    data = (yaml.safe_load(f.read_text(encoding="utf-8")) if f.exists() else {}) or {}
+    mods = data.get("modules") or {}
+    if name not in mods:
+        raise SystemExit(f"kc set: no module '{name}' in registry")
+    entry = mods[name] or {}
+    changes = []
+    for pair in pairs:
+        if "=" not in pair:
+            raise SystemExit(f"kc set: expected key=value, got '{pair}'")
+        k, v = pair.split("=", 1)
+        if k not in SETTABLE:
+            raise SystemExit(f"kc set: '{k}' cannot be set (settable: {', '.join(sorted(SETTABLE))}; "
+                             f"template: `kc detach`)")
+        if v.lower() in ("~", "none", "null"):
+            val = None
+        elif v.lower() in ("true", "false"):
+            val = v.lower() == "true"
+        elif k == "write_zones":
+            val = [z.strip() for z in v.split(",") if z.strip()]
+        else:
+            val = v
+        if k == "status" and val not in ("active", "frozen", "disconnected"):
+            raise SystemExit("kc set: status must be active | frozen | disconnected")
+        entry[k] = val
+        changes.append(f"{k}={v}")
+    mods[name] = entry
+    data["modules"] = mods
+    f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8", newline="\n")
+    auto_commit(core, ["ecosystem/registry.yml"], f"set {name}: {', '.join(changes)}")
+    print(f"set {name}: {', '.join(changes)}")
+    path = next((m["path"] for m in C.resolve(core)[0] if m["name"] == name), None)
+    if any(c.startswith("remote=") for c in changes) and path and is_repo(path) and not entry.get("external"):
+        remote = entry.get("remote")
+        if remote:
+            verb = "set-url" if "origin" in remotes(path) else "add"
+            _git(path, "remote", verb, "origin", remote)
+            print(f"  origin -> {remote}: {push(path)}")
+        elif "origin" in remotes(path):
+            _git(path, "remote", "remove", "origin")
+            print("  origin removed: the module is local-only now")
+
+
 def _set_path(core, name, dest):
     yaml = C._yaml()
     did = C.load_env(core).get("KC_DEVICE_ID")

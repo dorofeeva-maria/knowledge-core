@@ -28,9 +28,11 @@ engine updates never touch them (ADR 0009).
   (`upstream`).
 
 Modules enter the registry through `kc new-module` (a new repo) or `kc add-module NAME PATH`
-(an existing repo; `--external --write-zone P` for a repo that is not yours). Other fields are
-edited by hand (or by the agent) in `registry.yml`; `kc pull-all` reports any contract mismatch
-that results.
+(an existing repo; `--external --write-zone P` for a repo that is not yours). Change fields with
+`kc set NAME key=value ...` (`remote`, `status`, `private`, `external`, `write_zones`,
+`language`, `media`, `check`; `~` clears a field): it records the change as an `auto:` commit
+and, for `remote`, points the module's `origin` at it and pushes. Stop following a template with
+`kc detach NAME`. `kc pull-all` reports any contract mismatch.
 
 Per-device absolute paths are **not** here; they live in the gitignored device overlay
 `devices.local.yml`, created by `bootstrap`.

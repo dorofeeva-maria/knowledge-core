@@ -22,7 +22,8 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
 
 ## Steps
 
-1. **Route.** For each distinct piece of knowledge, decide which module it belongs to (one
+1. **Route.** Skip what was already written during the session at the human's request. For
+   each other distinct piece of knowledge, decide which module it belongs to (one
    topic per note) and write it **into that module's own repo**, in that module's format and
    following that module's own rules if it has any (read its `AGENTS.md` / `README`).
    - Prefer updating an existing note over creating a near-duplicate; bump its `updated`.

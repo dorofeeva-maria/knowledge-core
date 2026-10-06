@@ -19,6 +19,7 @@ Core-scoped (finds the core via KC_CORE or by searching upward):
                  [--remote URL] [--language L] [--private] [--media DIR|none] [--check CMD]
   kc add-module NAME PATH [--external [--write-zone P]...] [--upstream URL] [--language L]
                  [--private] [--media DIR|none] [--check CMD]   register an existing repo
+  kc set NAME key=value...   change a module's registry fields (remote also rewires origin + pushes)
   kc pull-all                sync core + present modules: origin, then template/engine updates
   kc update NAME             apply a template/engine update interactively (NAME or "core")
   kc detach NAME [--yes]     stop following the template/engine (NAME or "core"); warns first
@@ -108,6 +109,11 @@ def main(argv):
                           upstream=_opt(rest, "--upstream"), language=_opt(rest, "--language"),
                           private="--private" in rest, media=_opt(rest, "--media"),
                           check=_opt(rest, "--check"))
+    elif cmd == "set":
+        if len(rest) < 2:
+            raise SystemExit("kc set: NAME key=value... required")
+        from . import create
+        create.set_fields(_need_core(), rest[0], rest[1:])
     elif cmd == "registry":
         repos.show_registry(_need_core())
     elif cmd == "home":

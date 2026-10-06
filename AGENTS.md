@@ -24,7 +24,7 @@ generated from here by `adapters/`.
 | registry, pull-all, commit-push, push-all, todo | CLI | `kc <cmd>` |
 | resolve an update / stop following a template | CLI | `kc update NAME`, `kc detach NAME` |
 | HOME map, check-template | CLI | `kc home`, `kc check-template` |
-| create a module / add an existing repo / list templates | CLI | `kc new-module`, `kc add-module`, `kc templates` |
+| create a module / add an existing repo / change its fields / list templates | CLI | `kc new-module`, `kc add-module`, `kc set`, `kc templates` |
 | set up this device | CLI | `kc bootstrap` |
 | per-AI wrappers | CLI | `kc ensure-wrappers --agent NAME`, `kc add-agent NAME` |
 
@@ -44,6 +44,17 @@ The start hook runs `kc pull-all` and `kc todo`. Read their report before anythi
 
 Every commit is pushed right away (`kc commit-push`). `kc` never commits in external modules
 (the human does), and changes proposed to a template or the engine need confirmation first.
+
+## During the session
+
+- The session draft records the conversation by itself (see *Session start*); `close` routes it
+  into modules.
+- When the human asks to record, save or update something now, write it into the right module
+  right away — same rules as the Route step of `skills/close.md` — and commit it with
+  `kc commit-push`. `close` later skips what is already written.
+- One session per core at a time: `kc` commits whole repos, so a second session in the same
+  core would sweep up the first one's changes. The start hook warns if another session looks
+  active.
 
 ## Large tasks
 

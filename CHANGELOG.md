@@ -6,6 +6,8 @@ decisions behind changes are in `docs/adr/`.
 ## Unreleased
 
 ### Added
+- `kc set NAME key=value`; AGENTS.md *During the session* (write on request, one session per
+  core); start hook warns about another active session. (ADR 0010)
 - `kc add-module NAME PATH` registers an existing repo (own or `--external`). (ADR 0009)
 - Module contract check in `kc pull-all` (`MISMATCH` lines) and the module's own format check
   (registry/catalog field `check`, `kc new-module --check`). (ADR 0008)
