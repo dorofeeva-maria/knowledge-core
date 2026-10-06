@@ -65,8 +65,9 @@ See `ecosystem/README.md` for field semantics.
 
 Per-device absolute paths live in a gitignored overlay (`ecosystem/devices.local.yml`), keyed
 by device id. `.env` (gitignored) holds `KC_DEVICE_ID` and an optional per-session
-`KC_LANGUAGE`. Instance-wide settings (default `language`) live in committed
-`ecosystem/instance.yml`.
+`KC_LANGUAGE`. Instance-wide settings (default `language`, draft capture, `large_file_mb`)
+live in committed `ecosystem/instance.yml`. Module settings (`language`, `media`) are optional
+registry fields, mirrored as plain rules in the module's own `AGENTS.md` (ADR 0007).
 
 ## Access & privacy
 

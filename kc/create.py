@@ -33,7 +33,8 @@ def _git(path, *args):
     return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True)
 
 
-def new_module(core, name, template=None, template_url=None, no_template=False, path=None):
+def new_module(core, name, template=None, template_url=None, no_template=False, path=None,
+               remote=None, language=None, private=False, media=None):
     dest = Path(path).expanduser() if path else (core.parent / "projects" / name)
     if dest.exists():
         raise SystemExit(f"kc new-module: {dest} already exists")
@@ -67,26 +68,35 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
             f"A self-contained module. Describe its purpose, structure, and rules here.\n"
             f"Notes use YAML frontmatter (title, type, updated); links are intra-module only.\n",
             encoding="utf-8", newline="\n")
-        _git(dest, "add", "AGENTS.md")
+        (dest / ".gitignore").write_text("media/large/\n", encoding="utf-8", newline="\n")
+        _git(dest, "add", "AGENTS.md", ".gitignore")
         _git(dest, "commit", "-m", "Initialize module")
         print(f"created bare module -> {dest}")
 
-    from .gitsync import prepare
+    from .gitsync import prepare, push
     prepare(dest)
-    _register(core, name, source)
+    if remote:
+        _git(dest, "remote", "add", "origin", remote)
+        print(f"  origin -> {remote}: {push(dest)}")
+    _register(core, name, source, remote=remote, language=language, private=private, media=media)
     from .gitsync import auto_commit
     auto_commit(core, ["ecosystem/registry.yml"], f"register module {name}")
     _set_path(core, name, dest)
     print(f"registered '{name}' and recorded its path for this device")
 
 
-def _register(core, name, upstream=None):
+def _register(core, name, upstream=None, remote=None, language=None, private=False, media=None):
     yaml = C._yaml()
     f = core / "ecosystem" / "registry.yml"
     data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
     mods = data.get("modules") or {}
-    mods.setdefault(name, {"remote": None, "upstream": upstream, "external": False,
-                           "status": "active", "private": False})
+    entry = {"remote": remote, "upstream": upstream, "external": False,
+             "status": "active", "private": bool(private)}
+    if language:
+        entry["language"] = language
+    if media is not None:
+        entry["media"] = False if media in ("none", "false", "") else media
+    mods.setdefault(name, entry)
     data["modules"] = mods
     f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8", newline="\n")
 

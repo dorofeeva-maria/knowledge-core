@@ -174,7 +174,13 @@ def commit_push(core, message, all_repos=False):
         if not G.dirty(path):
             report.append((name, "nothing to commit"))
             continue
-        G.git(path, "add", "-A")
+        big = G.stage(path, limit=G.large_limit(core))
+        if big:
+            report.append((name, f"left out (over {G.large_limit(core) // 2**20} MB): {', '.join(big)} — "
+                                 f"move to <media>/large/ (not committed)"))
+        if not G.git(path, "diff", "--cached", "--quiet").returncode:
+            report.append((name, "nothing to commit"))
+            continue
         r = G.git(path, "commit", "-m", message)
         if r.returncode != 0:
             report.append((name, f"commit fail: {G.last(r.stderr)}"))

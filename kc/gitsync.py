@@ -137,13 +137,42 @@ def sync(path, name, external=False, upstream_url=None, interactive=False):
     return "ok (" + "; ".join(msgs) + ")" if msgs else "ok (no remotes)"
 
 
+def large_limit(core=None):
+    """Bytes above which a file is never committed (instance `large_file_mb`, default 20)."""
+    mb = 20
+    if core is not None:
+        try:
+            from .core import load_instance
+            mb = float(load_instance(core).get("large_file_mb", 20))
+        except Exception:
+            pass
+    return int(mb * 1024 * 1024)
+
+
+def stage(path, paths=None, limit=None):
+    """`git add` (all, or `paths`), then unstage files larger than the limit. Returns the
+    list of files left out, so callers can tell the human (ADR 0007)."""
+    git(path, "add", "-A", *(["--", *paths] if paths else []))
+    limit = limit or large_limit()
+    big = []
+    for f in git(path, "diff", "--cached", "--name-only", "--diff-filter=AM").stdout.splitlines():
+        fp = Path(path) / f
+        if fp.exists() and fp.stat().st_size > limit:
+            git(path, "reset", "-q", "--", f)
+            big.append(f)
+    return big
+
+
 def auto_commit(core, paths, message, and_push=True):
     """Commit only `paths` in the core as an automatic action: message prefixed `auto:` so the
     history of what kc did on its own is `git log --grep '^auto:'` (ADR 0005). Pushed right
     away, like every commit to the core (ADR 0006)."""
     if not is_repo(core):
         return False
-    git(core, "add", "-A", "--", *paths)
+    big = stage(core, paths, large_limit(core))
+    if big:
+        print(f"  not committed (over {large_limit(core) // 2**20} MB, stays on this device): "
+              + ", ".join(big))
     if not git(core, "diff", "--cached", "--quiet", "--", *paths).returncode:
         return False
     r = git(core, "commit", "-m", f"auto: {message}", "--", *paths)

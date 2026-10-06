@@ -6,6 +6,9 @@ decisions behind changes are in `docs/adr/`.
 ## Unreleased
 
 ### Added
+- Module settings `language`, `media` (registry, optional); `kc new-module --remote --language
+  --private --media`; size limit `large_file_mb` (default 20): `kc` never commits bigger files;
+  media goes to the module's media folder, large files to `<media>/large/`. (ADR 0007)
 - Session drafts: raw transcript captured by `kc hook stop|pre-compact|session-end` (background,
   every 5 turns / 15 min), `kc draft`, `kc hook session-start`; adapter `transcript:` spec;
   `kc push-external NAME`. (ADR 0006)

@@ -28,8 +28,10 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
    - Prefer updating an existing note over creating a near-duplicate; bump its `updated`.
    - Never write cross-module links. Never write into an `external` module outside its
      `write_zones`; with no zones, treat it as read-only.
-   - Language: the module's own setting if it has one, else the session language
-     (`KC_LANGUAGE` in `.env`, else instance `language`).
+   - Language: the module's registry `language` if set, else the session language
+     (`KC_LANGUAGE` in `.env`, else instance `language`). Media: as in the `inbox` skill.
+   - If the module's `AGENTS.md` states a different language or media rule than the registry,
+     point it out and propose to sync them.
 
 2. **Reconcile.** When new knowledge conflicts with what a module already says: if both notes
    carry `updated` dates and one is clearly newer, the newer wins — note the change. If it is
@@ -58,8 +60,8 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
    `kc push-external NAME`. Show the combined report.
 
 7. **Clear.** Delete this session's draft and the inbox items you processed, and their todo
-   items if any; commit the core. **Keep media originals and their transcripts** — do not
-   delete media. Anything unresolved stays and becomes a todo item; say so. If the
+   items if any; commit the core. Media originals have moved into modules (`inbox` skill).
+   Anything unresolved stays and becomes a todo item; say so. If the
    conversation goes on after `close`, a new draft starts by itself from this point.
 
 ## Rules

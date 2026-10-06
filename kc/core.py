@@ -83,5 +83,7 @@ def resolve(core):
             "remote": m.get("remote"),
             "upstream": m.get("upstream") if "upstream" not in m or m.get("upstream")
                         else "detached",
+            "language": m.get("language"),
+            "media": m.get("media", "media/"),
         })
     return out, did

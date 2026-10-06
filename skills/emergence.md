@@ -38,9 +38,17 @@ URL**. Then create it with `kc new-module NAME [--template T | --template-url UR
 --no-template]`. A chosen template becomes the module's `upstream` (fork model, ADR 0003). Never
 create a module without the human's go-ahead.
 
+Before creating, ask the human for the module's settings (ADR 0007): **language** (default:
+the session language), **private** (yes/no), **remote** — the URL of an empty repo to push to
+(without it the module stays on this device). Media goes to `media/` unless the human says
+otherwise (another folder, or `none`). Pass them: `--language L --private --remote URL
+--media DIR|none`. The same questions apply when promoting part of a module into a new one.
+
 After `kc new-module` (content on `main`): **clarify its purpose and
 structure with the user**, then rewrite the template's placeholders (AGENTS.md, README,
-starter notes) into the module's real identity and remove any leftover template text. The
+starter notes) into the module's real identity and remove any leftover template text. Write
+the settings into the module's `AGENTS.md` as plain rules (e.g. "Write in Russian. Keep source
+files in media/; files over 20 MB in media/large/, which is not committed."). The
 module repo must end up with **no ecosystem references** (see `docs/templates.md`). A
 format-template extracted from a stabilized module follows the same rules and may carry
 type-specific, model-agnostic tooling. Before publishing a template, pass the

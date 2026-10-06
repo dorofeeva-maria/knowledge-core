@@ -35,6 +35,8 @@ modules:
     write_zones: []       # only when external: paths the core may write to; [] = read-only
     status: active        # active | frozen | disconnected
     private: false        # true = never surface its details in unrelated/public places
+    language: ru          # optional: language to write in; absent = session language
+    media: media/         # optional: where source media goes; absent = media/; false = not kept
 ```
 
 Field semantics (what each value makes the core do):
@@ -57,10 +59,19 @@ Field semantics (what each value makes the core do):
     so we remember it was intentionally retired, not accidentally lost.
 - **`private`** — `true` makes the core keep the module's specifics out of unrelated
   cross-references and out of anything that could become public.
+- **`language`** — optional. The language the core writes into this module. Absent: the
+  session language (`KC_LANGUAGE`, else `instance.yml` `language`).
+- **`media`** — optional. Folder (inside the module) where processed source media goes —
+  PDFs, images, audio, video — with transcripts beside them; files over the size limit go to
+  `<media>/large/`, which the module's `.gitignore` excludes. Absent: `media/`. `false`: the
+  module keeps no media (only the distilled notes).
 
-Not stored here, on purpose: per-device presence (device overlay path present or absent), and the module's
-write language (the module's own setting; resolution order: module setting → `KC_LANGUAGE`
-in `.env` → `instance.yml` `language`).
+Settings are optional, so any repo can be a module as is (ADR 0007). When a module is created
+or promoted, the agent also writes the same conventions in plain words into the module's own
+`AGENTS.md` ("Write in Russian. Keep source files in media/."), so an assistant working in the
+module alone follows them too. If the two disagree, the agent proposes to sync them.
+
+Not stored here, on purpose: per-device presence (device overlay path present or absent).
 
 ## How to write the device overlay `devices.local.yml` (gitignored)
 

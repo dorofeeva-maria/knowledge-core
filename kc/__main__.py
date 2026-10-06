@@ -17,6 +17,7 @@ Core-scoped (finds the core via KC_CORE or by searching upward):
   kc home                    regenerate ecosystem/HOME.md (the module map)
   kc templates               list the module-template catalog
   kc new-module NAME [--template T | --template-url URL | --no-template] [--path P]
+                 [--remote URL] [--language L] [--private] [--media DIR|none]
   kc pull-all                sync core + present modules: origin, then template/engine updates
   kc update NAME             apply a template/engine update interactively (NAME or "core")
   kc detach NAME [--yes]     stop following the template/engine (NAME or "core"); warns first
@@ -109,7 +110,11 @@ def main(argv):
                           template=_opt(rest, "--template"),
                           template_url=_opt(rest, "--template-url"),
                           no_template="--no-template" in rest,
-                          path=_opt(rest, "--path"))
+                          path=_opt(rest, "--path"),
+                          remote=_opt(rest, "--remote"),
+                          language=_opt(rest, "--language"),
+                          private="--private" in rest,
+                          media=_opt(rest, "--media"))
     elif cmd == "registry":
         repos.show_registry(_need_core())
     elif cmd == "home":
