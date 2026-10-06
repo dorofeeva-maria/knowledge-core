@@ -11,15 +11,15 @@ Module-scoped (run in any module):
   kc compact-log PATH [--keep N]   archive all but the last N log entries (default 50)
   kc check-template [DIR]     flag ecosystem references in a template/module (must be standalone)
 
-Center-scoped (finds the center via KC_CENTER or by searching upward):
+Core-scoped (finds the core via KC_CORE or by searching upward):
   kc bootstrap [--device-id ID] [--agent NAME]... [--language L] [--yes]   set up this device
   kc registry                show resolved modules on this device
   kc home                    regenerate ecosystem/HOME.md (the module map)
   kc templates               list the module-template catalog
   kc new-module NAME [--template T | --template-url URL | --no-template] [--path P]
-  kc pull-all                pull center + present modules (fork model; external = ff)
+  kc pull-all                pull core + present modules (fork model; external = ff)
   kc commit-push [--all] [--push] -m MSG   commit current module (or --all); push only with --push
-  kc push-all                push center + present modules that have unpushed commits
+  kc push-all                push core + present modules that have unpushed commits
   kc check-drafts            report pending inbox/ and drafts/
   kc ensure-wrappers --agent NAME   regenerate NAME's command wrappers from the canon
   kc add-agent NAME          install an assistant's wrappers + startup stub
@@ -33,13 +33,13 @@ from pathlib import Path
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 from . import maintain, repos          # noqa: E402
-from . import center as C              # noqa: E402
+from . import core as C              # noqa: E402
 
 
-def _need_center():
-    c = C.find_center()
+def _need_core():
+    c = C.find_core()
     if not c:
-        raise SystemExit("kc: no center found (set KC_CENTER or run inside one)")
+        raise SystemExit("kc: no core found (set KC_CORE or run inside one)")
     return c
 
 
@@ -88,29 +88,29 @@ def main(argv):
             else:
                 i += 1
         from . import bootstrap
-        bootstrap.run(_need_center(),
+        bootstrap.run(_need_core(),
                       device_id=_opt(rest, "--device-id"),
                       agents=agents or None,
                       language=_opt(rest, "--language"),
                       yes="--yes" in rest)
     elif cmd == "templates":
         from . import create
-        create.show_templates(_need_center())
+        create.show_templates(_need_core())
     elif cmd == "new-module":
         if not rest or rest[0].startswith("--"):
             raise SystemExit("kc new-module: NAME required")
         from . import create
-        create.new_module(_need_center(), rest[0],
+        create.new_module(_need_core(), rest[0],
                           template=_opt(rest, "--template"),
                           template_url=_opt(rest, "--template-url"),
                           no_template="--no-template" in rest,
                           path=_opt(rest, "--path"))
     elif cmd == "registry":
-        repos.show_registry(_need_center())
+        repos.show_registry(_need_core())
     elif cmd == "home":
-        repos.home(_need_center())
+        repos.home(_need_core())
     elif cmd == "pull-all":
-        repos.pull_all(_need_center())
+        repos.pull_all(_need_core())
     elif cmd == "commit-push":
         all_repos = "--all" in rest
         do_push = "--push" in rest
@@ -121,22 +121,22 @@ def main(argv):
             msg = rest[i + 1] if i + 1 < len(rest) else None
         if not msg:
             raise SystemExit("kc commit-push: -m MSG required")
-        repos.commit_push(_need_center(), msg, all_repos=all_repos, do_push=do_push)
+        repos.commit_push(_need_core(), msg, all_repos=all_repos, do_push=do_push)
     elif cmd == "push-all":
-        repos.push_all(_need_center())
+        repos.push_all(_need_core())
     elif cmd == "check-drafts":
-        return repos.check_drafts(_need_center())
+        return repos.check_drafts(_need_core())
     elif cmd == "ensure-wrappers":
         agent = _opt(rest, "--agent")
         if not agent:
             raise SystemExit("kc ensure-wrappers: --agent NAME required")
         from . import wrappers
-        wrappers.ensure_wrappers(_need_center(), agent)
+        wrappers.ensure_wrappers(_need_core(), agent)
     elif cmd == "add-agent":
         if not rest:
             raise SystemExit("kc add-agent: NAME required")
         from . import wrappers
-        wrappers.add_agent(_need_center(), rest[0])
+        wrappers.add_agent(_need_core(), rest[0])
     else:
         print(__doc__)
         return 1

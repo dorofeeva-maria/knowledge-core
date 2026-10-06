@@ -7,7 +7,7 @@ A model-agnostic engine for a personal ecosystem of independent, version-control
 - **Output** is well-structured, internally-consistent modules — each its own git repo,
   openable and workable in isolation, usable with **any** AI assistant.
 
-This repository is the **engine**: a public template you fork into a private *center*,
+This repository is the **engine**: a public template you fork into a private *core*,
 from which you grow your ecosystem. It carries only skeleton + documentation + tooling —
 never personal data.
 
@@ -17,6 +17,8 @@ never personal data.
 - [`docs/glossary.md`](docs/glossary.md) — terms in one place.
 - [`docs/templates.md`](docs/templates.md) — how module templates are authored.
 - [`AGENTS.md`](AGENTS.md) — the AI-agnostic instruction entry.
+- [`docs/README.md`](docs/README.md) — which document answers what (documentation layers).
+- [`docs/adr/`](docs/adr/) — why the engine is built this way; [`CHANGELOG.md`](CHANGELOG.md) — what changed.
 
 ## Layout
 
@@ -27,7 +29,7 @@ never personal data.
 | `adapters/` | per-AI generators for command wrappers + startup stubs |
 | `docs/adr/` | architecture decision records (Nygard) for the engine itself |
 | `docs/` | the system canon (architecture, glossary) |
-| `ecosystem/` | center state the fork fills in: registry, HOME map, candidates, log, journal |
+| `ecosystem/` | core state the fork fills in: registry, HOME map, candidates, log, journal |
 | `config/` | example instance + device configuration |
 
 Format-templates (scaffolds for new modules) live in **separate repos**, not here.
@@ -35,7 +37,7 @@ Format-templates (scaffolds for new modules) live in **separate repos**, not her
 ## Quickstart
 
 See [`docs/setup.md`](docs/setup.md) for the full flow. In short: clone this engine as your
-center, `git remote rename origin upstream`, run `python3 -m kc bootstrap` (pick language,
+core, `git remote rename origin upstream`, run `python3 -m kc bootstrap` (pick language,
 device id, assistant), then `kc new-module NAME --template info`. Prerequisites: git, Python
 3.9+, `pip install pyyaml`, and a `PATH` dir for the launcher.
 

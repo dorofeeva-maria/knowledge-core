@@ -1,4 +1,4 @@
-# Catalog of module templates offered when creating a module. Read by the center.
+# Catalog of module templates offered when creating a module. Read by the core.
 # The engine ships only `info` as a starting point; process-type templates emerge from real
 # work and are added here as they are extracted. Add your own — any git repo can be a template.
 # A module's chosen template is recorded as its git `upstream` remote, NOT here; this file is

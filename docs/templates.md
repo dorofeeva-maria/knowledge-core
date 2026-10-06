@@ -8,7 +8,7 @@ modules are forked from it (the fork sets the template as `upstream`; see the fo
 
 - **No ecosystem references.** A template's files *are* the new module's starting content —
   all inherited by the fork. So a template must read as a normal, standalone repo: no mention
-  of the center, registry, `kc`, "ecosystem", the fork model, or its own template-ness. (This
+  of the core, registry, `kc`, "ecosystem", the fork model, or its own template-ness. (This
   authoring doc is the only place that talks about templates — it lives in the engine, never
   inside a template.)
 - **Ship placeholders, rewritten on first use.** A module `AGENTS.md` describing the module, a
@@ -23,10 +23,10 @@ modules are forked from it (the fork sets the template as `upstream`; see the fo
 ## Checklist (before publishing or extracting a template)
 
 1. **No ecosystem references:** `kc check-template <template-dir>` reports clean (review any
-   flagged lines — a module repo must not mention the center, registry, `kc`, the fork model,
+   flagged lines — a module repo must not mention the core, registry, `kc`, the fork model,
    or its own template-ness).
 2. **Standalone adequacy:** `AGENTS.md` alone lets an assistant build an adequate module
-   *without the center* — it explains, in tool-neutral terms, how to add notes (frontmatter +
+   *without the core* — it explains, in tool-neutral terms, how to add notes (frontmatter +
    TL;DR), the folder structure, how to link, and how to keep `index.md` and `log.md`. If an
    assistant with only this repo couldn't produce a sensible module, the template is not ready.
 

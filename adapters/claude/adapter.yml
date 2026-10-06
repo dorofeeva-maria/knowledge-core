@@ -8,14 +8,14 @@ wrapper:
     ---
     description: {description}
     ---
-    Run the canonical skill `skills/{skill}.md` in this center. Read it in full and follow
+    Run the canonical skill `skills/{skill}.md` in this core. Read it in full and follow
     it exactly. It is the single source of truth; this file is only a generated pointer.
 
 # Canon entry pointer for Claude.
 pointer:
   path: "CLAUDE.md"
   body: |
-    # Center — Claude entry
+    # Core — Claude entry
 
     Canonical, AI-agnostic instructions are in `AGENTS.md`. Read it first and follow it.
     Commands under `.claude/commands/` are generated pointers to `skills/` — do not edit by hand.

@@ -1,14 +1,14 @@
-"""Locate the center and load its registry / device overlay / .env.
+"""Locate the core and load its registry / device overlay / .env.
 
-The center is the repo that holds `ecosystem/registry.yml`. These files are read
-ONLY here (by the center); modules never read them.
+The core is the repo that holds `ecosystem/registry.yml`. These files are read
+ONLY here (by the core); modules never read them.
 """
 import os
 from pathlib import Path
 
 
-def find_center(start=None):
-    env = os.environ.get("KC_CENTER")
+def find_core(start=None):
+    env = os.environ.get("KC_CORE")
     if env and (Path(env) / "ecosystem" / "registry.yml").exists():
         return Path(env).resolve()
     p = Path(start or Path.cwd()).resolve()
@@ -18,9 +18,9 @@ def find_center(start=None):
     return None
 
 
-def load_env(center):
+def load_env(core):
     env = {}
-    f = center / ".env"
+    f = core / ".env"
     if f.exists():
         for line in f.read_text(encoding="utf-8").splitlines():
             line = line.strip()
@@ -28,7 +28,7 @@ def load_env(center):
                 continue
             k, v = line.split("=", 1)
             env[k.strip()] = v.strip()
-    for k in ("KC_DEVICE_ID", "KC_LANGUAGE", "KC_CENTER"):  # real env wins
+    for k in ("KC_DEVICE_ID", "KC_LANGUAGE", "KC_CORE"):  # real env wins
         if os.environ.get(k):
             env[k] = os.environ[k]
     return env
@@ -42,26 +42,26 @@ def _yaml():
         raise SystemExit("kc: PyYAML is required — install it (pip install pyyaml)")
 
 
-def load_registry(center):
+def load_registry(core):
     yaml = _yaml()
-    data = yaml.safe_load((center / "ecosystem" / "registry.yml").read_text(encoding="utf-8")) or {}
+    data = yaml.safe_load((core / "ecosystem" / "registry.yml").read_text(encoding="utf-8")) or {}
     return data.get("modules") or {}
 
 
-def load_devices(center):
-    f = center / "ecosystem" / "devices.local.yml"
+def load_devices(core):
+    f = core / "ecosystem" / "devices.local.yml"
     if not f.exists():
         return {}
     return _yaml().safe_load(f.read_text(encoding="utf-8")) or {}
 
 
-def resolve(center):
+def resolve(core):
     """(modules, device_id). Each module: name, path(Path|None), status, external,
     write_zones, private, remote."""
-    reg = load_registry(center)
-    env = load_env(center)
+    reg = load_registry(core)
+    env = load_env(core)
     did = env.get("KC_DEVICE_ID")
-    paths = ((load_devices(center).get(did) or {}).get("paths") or {}) if did else {}
+    paths = ((load_devices(core).get(did) or {}).get("paths") or {}) if did else {}
     out = []
     for name, m in reg.items():
         m = m or {}

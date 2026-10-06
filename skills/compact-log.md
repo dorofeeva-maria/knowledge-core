@@ -7,7 +7,7 @@ description: Shrink an oversized log, preserving decisions and current state.
 
 # Skill: compact-log
 
-Use when any project's (or the center's) `log.md` has grown too large. Works on any log.
+Use when any project's (or the core's) `log.md` has grown too large. Works on any log.
 
 ## Steps
 

@@ -12,16 +12,16 @@ How anyone creates an ecosystem from this engine, and how to add it to another d
 
 ## Create a new ecosystem (fresh)
 
-1. Clone the engine into your center folder:
-   `git clone <engine-url> my-center`
+1. Clone the engine into your core folder:
+   `git clone <engine-url> my-core`
 2. Make the engine your upstream (fork model — `main` mirrors it, `working` holds content):
-   `cd my-center && git remote rename origin upstream`
+   `cd my-core && git remote rename origin upstream`
 3. (Optional, for multi-device / backup) create your own empty repo and add it:
-   `git remote add origin <your-center-url>`
+   `git remote add origin <your-core-url>`
 4. Bootstrap this device (sets `working`, installs `kc` on `PATH`, generates your assistant's
    wrappers, records the device):
    `python3 -m kc bootstrap`  → answer: language, device id, assistant(s).
-5. Push your center (if you added an origin): `git push -u origin working`.
+5. Push your core (if you added an origin): `git push -u origin working`.
 6. Create modules as you need them:
    `kc new-module NAME --template info`  (or `--no-template`, or `--template-url <url>`).
 
@@ -30,13 +30,13 @@ except the `upstream` remote.
 
 ## Add the ecosystem to another device
 
-1. Clone your center and switch to the content branch:
-   `git clone <your-center-url> my-center && cd my-center && git checkout working`
+1. Clone your core and switch to the content branch:
+   `git clone <your-core-url> my-core && cd my-core && git checkout working`
 2. Bootstrap with a new device id:
    `python3 -m kc bootstrap`  → for each module, choose whether to set it up here; modules with
    a remote are cloned to this device's path. **Local-only modules (no remote) can't travel** —
    push them to a remote first if you want them on more than one device.
-3. From now on, each session start pulls the center and present modules.
+3. From now on, each session start pulls the core and present modules.
 
 Notes:
 - The `upstream` (engine) rebase runs where `upstream` is configured (typically your first

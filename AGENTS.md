@@ -28,9 +28,9 @@ generated from here by `adapters/`.
 ## Ground rules
 
 - Modules are independent and know nothing of the ecosystem; never add cross-module links.
-- Write only within the current module; cross-module moves happen through the center.
+- Write only within the current module; cross-module moves happen through the core.
 - Propose structural changes (new module, extraction, split) — the human decides.
 - Automatic (no approval): mechanical whitelist only. Content edits are gated.
-- Sessions run from the **center**; it may write into modules (except `external` ones,
+- Sessions run from the **core**; it may write into modules (except `external` ones,
   which are limited to their registry `write_zones`). Opening a module alone is standalone
   mode: follow that module's own rules; ecosystem orchestration is simply absent.

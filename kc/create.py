@@ -6,18 +6,18 @@ does not store it.
 """
 import subprocess
 from pathlib import Path
-from . import center as C
+from . import core as C
 
 
-def list_templates(center):
-    f = center / "ecosystem" / "templates.yml"
+def list_templates(core):
+    f = core / "ecosystem" / "templates.yml"
     if not f.exists():
         return {}
     return (C._yaml().safe_load(f.read_text(encoding="utf-8")) or {}).get("templates") or {}
 
 
-def show_templates(center):
-    t = list_templates(center)
+def show_templates(core):
+    t = list_templates(core)
     if not t:
         print("templates: none in catalog")
         return
@@ -33,8 +33,8 @@ def _git(path, *args):
     return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True)
 
 
-def new_module(center, name, template=None, template_url=None, no_template=False, path=None):
-    dest = Path(path).expanduser() if path else (center.parent / "projects" / name)
+def new_module(core, name, template=None, template_url=None, no_template=False, path=None):
+    dest = Path(path).expanduser() if path else (core.parent / "projects" / name)
     if dest.exists():
         raise SystemExit(f"kc new-module: {dest} already exists")
 
@@ -42,7 +42,7 @@ def new_module(center, name, template=None, template_url=None, no_template=False
     if not no_template:
         source = template_url
         if not source and template:
-            t = list_templates(center).get(template)
+            t = list_templates(core).get(template)
             if not t:
                 raise SystemExit(f"kc new-module: no template '{template}' in catalog (see `kc templates`)")
             source = t.get("source")
@@ -69,17 +69,17 @@ def new_module(center, name, template=None, template_url=None, no_template=False
         _git(dest, "commit", "-m", "Initialize module")
         print(f"created bare module -> {dest}")
 
-    _register(center, name)
-    if (center / ".git").exists() and _git(center, "status", "--porcelain", "ecosystem/registry.yml").stdout.strip():
-        _git(center, "add", "ecosystem/registry.yml")
-        _git(center, "commit", "-m", f"register module {name}")
-    _set_path(center, name, dest)
+    _register(core, name)
+    if (core / ".git").exists() and _git(core, "status", "--porcelain", "ecosystem/registry.yml").stdout.strip():
+        _git(core, "add", "ecosystem/registry.yml")
+        _git(core, "commit", "-m", f"register module {name}")
+    _set_path(core, name, dest)
     print(f"registered '{name}' and recorded its path for this device")
 
 
-def _register(center, name):
+def _register(core, name):
     yaml = C._yaml()
-    f = center / "ecosystem" / "registry.yml"
+    f = core / "ecosystem" / "registry.yml"
     data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
     mods = data.get("modules") or {}
     mods.setdefault(name, {"remote": None, "external": False, "status": "active", "private": False})
@@ -87,13 +87,13 @@ def _register(center, name):
     f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
 
 
-def _set_path(center, name, dest):
+def _set_path(core, name, dest):
     yaml = C._yaml()
-    did = C.load_env(center).get("KC_DEVICE_ID")
+    did = C.load_env(core).get("KC_DEVICE_ID")
     if not did:
         print("  (KC_DEVICE_ID unset — path not recorded; run kc bootstrap)")
         return
-    f = center / "ecosystem" / "devices.local.yml"
+    f = core / "ecosystem" / "devices.local.yml"
     data = (yaml.safe_load(f.read_text(encoding="utf-8")) if f.exists() else {}) or {}
     data.setdefault(did, {}).setdefault("paths", {})[name] = str(dest)
     f.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")

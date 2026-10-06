@@ -7,7 +7,7 @@ description: Consolidate the session — route knowledge into modules, reconcile
 
 # Skill: close
 
-Run at the end of a working session, from the **center** (a repo with
+Run at the end of a working session, from the **core** (a repo with
 `ecosystem/registry.yml`). You consolidate everything the session produced into the right
 modules, keep the base consistent, and record what happened. You make the judgments and ask
 the human; you call `kc` for every mechanical/deterministic step — never reimplement it.
@@ -39,16 +39,16 @@ the human; you call `kc` for every mechanical/deterministic step — never reimp
    proposals in `ecosystem/candidates.md` and raise the ripe ones with the human. **Propose
    only — never create or delete modules yourself.**
 
-4. **Lint & index.** For each module you touched (and the center), run `kc lint <path>` and
+4. **Lint & index.** For each module you touched (and the core), run `kc lint <path>` and
    `kc index <path>`; fix broken intra-module links and stale indexes. Regenerate the
-   center's `HOME.md` with `kc home` if the set of modules changed.
+   core's `HOME.md` with `kc home` if the set of modules changed.
 
 5. **Record.** Append one line to `ecosystem/log.md` (date · modules touched · key
    decisions/proposals). Note mechanical/automatic actions in `ecosystem/journal.md` so the
    human can audit them. Decisions about the **engine itself** are not recorded here — those
-   become an ADR only when opening a PR to the engine.
+   become an ADR in the engine (see `docs/adr/README.md`).
 
-6. **Commit (per module).** In each touched repo (and the center) run
+6. **Commit (per module).** In each touched repo (and the core) run
    `kc commit-push -m "<message>"` — a message describing what changed **in that module**,
    honoring the module's own commit conventions if any. Do not push yet. Show the human the
    combined report.

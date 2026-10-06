@@ -5,7 +5,7 @@ opt-in (`--push`) so nothing leaves the machine without an explicit decision.
 """
 import subprocess
 from pathlib import Path
-from . import center as C
+from . import core as C
 from . import maintain
 
 
@@ -42,9 +42,9 @@ def _print_report(report):
 
 
 # ---------------------------------------------------------------- registry
-def show_registry(center):
-    mods, did = C.resolve(center)
-    print(f"center: {center}")
+def show_registry(core):
+    mods, did = C.resolve(core)
+    print(f"core: {core}")
     print(f"device: {did or '(KC_DEVICE_ID unset)'}")
     if not mods:
         print("modules: none in registry")
@@ -69,8 +69,8 @@ def _module_desc(path):
     return ""
 
 
-def home(center):
-    mods, _ = C.resolve(center)
+def home(core):
+    mods, _ = C.resolve(core)
     active = [m for m in mods if m["status"] != "disconnected"]
     lines = ["<!-- auto-generated map of modules; regenerate with `kc home` -->", "", "# HOME", ""]
     if not active:
@@ -81,7 +81,7 @@ def home(center):
         tag = f" _({', '.join(flags)})_" if flags else ""
         desc = _module_desc(m["path"])
         lines.append(f"- **{m['name']}**{tag}" + (f" — {desc}" if desc else ""))
-    (center / "ecosystem" / "HOME.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    (core / "ecosystem" / "HOME.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     print(f"home: {len(active)} module(s) mapped")
 
 
@@ -108,9 +108,9 @@ def pull_one(path, external):
     return "ok (" + ", ".join(msgs) + ")" if msgs else "ok (no remotes)"
 
 
-def pull_all(center):
-    report = [("center", pull_one(center, False))]
-    mods, _ = C.resolve(center)
+def pull_all(core):
+    report = [("core", pull_one(core, False))]
+    mods, _ = C.resolve(core)
     for m in mods:
         if m["status"] == "disconnected":
             continue
@@ -120,11 +120,11 @@ def pull_all(center):
 
 
 # ---------------------------------------------------------------- commit / push
-def commit_push(center, message, all_repos=False, do_push=False):
+def commit_push(core, message, all_repos=False, do_push=False):
     targets = []
     if all_repos:
-        targets.append(("center", center))
-        for m in C.resolve(center)[0]:
+        targets.append(("core", core))
+        for m in C.resolve(core)[0]:
             if m["external"] or m["status"] in ("disconnected", "frozen"):
                 continue
             if m["path"]:
@@ -156,9 +156,9 @@ def commit_push(center, message, all_repos=False, do_push=False):
     return report
 
 
-def push_all(center):
-    targets = [("center", center)]
-    for m in C.resolve(center)[0]:
+def push_all(core):
+    targets = [("core", core)]
+    for m in C.resolve(core)[0]:
         if m["external"] or m["status"] in ("disconnected", "frozen"):
             continue
         if m["path"]:
@@ -177,9 +177,9 @@ def push_all(center):
 
 
 # ---------------------------------------------------------------- drafts / inbox
-def check_drafts(center):
+def check_drafts(core):
     def items(name):
-        d = center / name
+        d = core / name
         if not d.exists():
             return []
         return [f.name for f in d.iterdir() if f.name != "README.md" and not f.name.startswith(".")]

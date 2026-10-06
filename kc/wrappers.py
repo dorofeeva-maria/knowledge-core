@@ -6,12 +6,12 @@ regenerated from the canon on each session start, so they never drift. They are
 instance/device artifacts — gitignored, not committed.
 """
 import json
-from . import center as C
+from . import core as C
 from . import maintain
 
 
-def _adapter(center, agent):
-    f = center / "adapters" / agent / "adapter.yml"
+def _adapter(core, agent):
+    f = core / "adapters" / agent / "adapter.yml"
     if not f.exists():
         raise SystemExit(
             f"kc: no adapter for '{agent}' (expected adapters/{agent}/adapter.yml). "
@@ -20,8 +20,8 @@ def _adapter(center, agent):
     return C._yaml().safe_load(f.read_text(encoding="utf-8")) or {}
 
 
-def _skills(center):
-    d = center / "skills"
+def _skills(core):
+    d = core / "skills"
     out = []
     if d.exists():
         for p in sorted(d.glob("*.md")):
@@ -58,30 +58,30 @@ def _merge_json(path, fragment):
     path.write_text(json.dumps(cur, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def ensure_wrappers(center, agent):
-    a = _adapter(center, agent)
+def ensure_wrappers(core, agent):
+    a = _adapter(core, agent)
     written = []
     w = a.get("wrapper")
     if w:
-        for skill, desc in _skills(center):
-            path = center / w["path"].format(skill=skill)
+        for skill, desc in _skills(core):
+            path = core / w["path"].format(skill=skill)
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(w["body"].format(skill=skill, description=desc), encoding="utf-8")
-            written.append(path.relative_to(center).as_posix())
+            written.append(path.relative_to(core).as_posix())
     p = a.get("pointer")
     if p:
-        (center / p["path"]).write_text(p["body"], encoding="utf-8")
+        (core / p["path"]).write_text(p["body"], encoding="utf-8")
         written.append(p["path"])
     s = a.get("startup")
     if s and s.get("merge_json"):
-        _merge_json(center / s["file"], s["merge_json"])
+        _merge_json(core / s["file"], s["merge_json"])
         written.append(s["file"])
     print(f"ensure-wrappers [{agent}]: {len(written)} file(s)"
           + (f" — {', '.join(written)}" if written else " (no skills yet)"))
     return written
 
 
-def add_agent(center, agent):
-    _adapter(center, agent)  # validates adapter exists
-    ensure_wrappers(center, agent)
+def add_agent(core, agent):
+    _adapter(core, agent)  # validates adapter exists
+    ensure_wrappers(core, agent)
     print(f"add-agent: '{agent}' installed")

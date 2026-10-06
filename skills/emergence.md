@@ -48,6 +48,6 @@ type-specific, model-agnostic tooling. Before publishing a template, pass the
 assistant could build an adequate module from it standalone.
 
 ## Retire
-Propose `frozen` (read-only, keep) or `disconnected` (center stops interacting; the repo
+Propose `frozen` (read-only, keep) or `disconnected` (core stops interacting; the repo
 lives on alone) when a module is no longer worked on. The human decides and sets it in the
 registry.

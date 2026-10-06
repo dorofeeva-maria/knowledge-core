@@ -9,13 +9,13 @@ isolation, usable with any assistant.
 ## Pieces
 
 - **Engine** (this repo, public) — skeleton + documentation + the `kc` CLI + skills + adapters.
-  You fork it into a center; it never holds personal data.
-- **Center** — a fork of the engine. Holds no domain knowledge, only *meta-knowledge about
+  You fork it into a core; it never holds personal data.
+- **Core** — a fork of the engine. Holds no domain knowledge, only *meta-knowledge about
   the ecosystem* plus the engine: the registry, the HOME map, the session log, the candidates
   list, the change journal, and the engine's own ADRs.
 - **Module** — an independent git repo (knowledge or project). It knows nothing about the
   ecosystem and nothing about other modules; it can be any shape. It works standalone;
-  orchestration is a bonus when a center is present.
+  orchestration is a bonus when a core is present.
 - **Tool-package** — not a module: a separate, usually public, reusable package a module
   depends on.
 - **Format-template** — a separate repo scaffolding a recurring kind of module; new modules
@@ -27,13 +27,13 @@ with limited access, e.g. a work repo: read it, write only in declared zones, or
 
 ## Topology & storage
 
-Modules are independent repos; by default new ones sit in `projects/` beside the center, but
-they may live anywhere (the center just records each path per device). No submodules, no
-nesting. The connective tissue is the center's device-aware registry.
+Modules are independent repos; by default new ones sit in `projects/` beside the core, but
+they may live anywhere (the core just records each path per device). No submodules, no
+nesting. The connective tissue is the core's device-aware registry.
 
 ## Fork-from-template model
 
-Applies to every repo created from one of our templates (the center from the engine; modules
+Applies to every repo created from one of our templates (the core from the engine; modules
 from format-templates; tool-packages; templates themselves):
 
 - `main` mirrors the upstream template; it is never polluted with content.
@@ -42,12 +42,12 @@ from format-templates; tool-packages; templates themselves):
   onto the fresh template) and fast-forwards `main`.
 - Improving the template: a `feature/*` branch cut from `main` (generic change only) → PR to
   the upstream template → maintainer merges.
-- External / arbitrary repos are exempt: they stay on their own branches; the center adapts to
+- External / arbitrary repos are exempt: they stay on their own branches; the core adapts to
   whatever they already have.
 
 ## Registry, devices, config
 
-The **registry** (`ecosystem/registry.yml`, committed) is read only by the center and holds
+The **registry** (`ecosystem/registry.yml`, committed) is read only by the core and holds
 the canonical facts it needs even when a module is absent: for each module — `remote`,
 `external` (+ `write_zones`), `status` (`active` | `frozen` | `disconnected`), `private`.
 See `ecosystem/README.md` for field semantics.
@@ -59,17 +59,17 @@ by device id. `.env` (gitignored) holds `KC_DEVICE_ID` and an optional per-sessi
 
 ## Access & privacy
 
-Every module may be **read** by the center, including private ones. A module is **written**
-only to itself; cross-module writes happen only through the center. Privacy is a
+Every module may be **read** by the core, including private ones. A module is **written**
+only to itself; cross-module writes happen only through the core. Privacy is a
 *non-surfacing* rule (never expose a private module's specifics in unrelated or public places),
 not a read block. The public engine never contains personal content.
 
 ## No cross-module links
 
 Links exist only *within* a module, in its own format. Modules never reference each other.
-Cross-module relationships, when worth keeping, are a note in the center — not a link in a
+Cross-module relationships, when worth keeping, are a note in the core — not a link in a
 file, not a maintained graph. Knowledge moves between modules by distilling it through the
-center (a module writing into itself), never by linking. Link-linting is therefore
+core (a module writing into itself), never by linking. Link-linting is therefore
 intra-module only.
 
 ## Two layers: mechanics vs judgment
@@ -93,7 +93,7 @@ an adapter still works via `AGENTS.md` (the universal fallback).
 - **Start** (hook): for each repo, pull (fork model); then check `inbox/` and `drafts/` — if
   anything is pending, it must be handled via `close` before new work.
 - **During**: a light draft in `drafts/`.
-- **`close`** (explicit, interactive, from the center): route knowledge into modules, reconcile
+- **`close`** (explicit, interactive, from the core): route knowledge into modules, reconcile
   conflicts (newer `updated` wins; genuine semantic conflicts go to the human), run emergence,
   lint/index touched modules, record a log line + journal, commit per module, push on
   confirmation, clear processed raw (keep media). See `skills/close.md`.
@@ -114,7 +114,8 @@ Elements emerge from sessions and are analyzed at `close` (see `skills/emergence
 reusable artifact is assessed for extraction into a tool-package *before* it is created; a
 theme is promoted to its own module when it has its own process, goal, mass, or recurrence; a
 module is split when it stops being legible. The engine itself evolves through ADRs
-(`docs/adr/`), written only when a change is proposed back to the engine.
+(`docs/adr/`), written whenever a choice changes its structure, a contract or agent behavior
+(see `docs/adr/README.md`).
 
 ## Memory
 

@@ -7,7 +7,7 @@ description: Turn raw dropped material (links, docs, text, media) into distilled
 
 # Skill: inbox
 
-Process everything in `inbox/` into the right modules. Run from the center. Raw material is
+Process everything in `inbox/` into the right modules. Run from the core. Raw material is
 never committed as-is — only distilled notes land in modules.
 
 ## Steps
