@@ -224,6 +224,9 @@ def commit_push(core, message, all_repos=False):
         if not G.is_repo(path):
             report.append((name, "absent"))
             continue
+        if G.conflicted(path):
+            report.append((name, "skipped — unfinished rebase/conflict; finish `kc update` first"))
+            continue
         if not G.dirty(path):
             report.append((name, "nothing to commit"))
             continue
