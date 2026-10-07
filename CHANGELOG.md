@@ -5,6 +5,36 @@ decisions behind changes are in `docs/adr/`.
 
 ## Unreleased
 
+### Changed — simplified architecture (ADR 0015)
+- The core is a one-time copy of the engine: no `upstream`, no rebasing onto engine updates, no
+  force-push. Templates are copied into new modules, with no link back.
+- `kc` is only the orchestrator: `bootstrap`, `registry`, `templates`, `new-module`,
+  `add-module`, `set`, `reviewed`, `sync`, `status`, `hook start|end`. Argument parsing with
+  argparse: `--help` on a command never runs it.
+- Sync (`kc sync`, run by the hooks at session start and end): commit leftovers → fetch →
+  rebase onto `origin/main` → push. A conflict stops only that repo, local commits are kept.
+  Frozen repos are fast-forwarded; external repos fast-forwarded on their branch when clean.
+- Hooks are installed per device by `kc bootstrap` in `.claude/settings.local.json`, with the
+  absolute Python path — no launcher on `PATH`, works from Git Bash on Windows.
+- Maintenance signals at session start: `format:`, `structure:` (growth since `kc reviewed`),
+  `repeat:` (a manual procedure at 3× in `todo.md`), `todo open:`.
+- `kc registry` lists each module's processes (its `.claude/skills/*/SKILL.md`).
+- Privacy of a private repo's remote is checked once (bootstrap, new-module, add-module,
+  `set remote=`), not on every push. `bootstrap` refuses a public core origin.
+- State: `ecosystem/todo.md` and `ecosystem/memory.md` (single files); registry fields
+  `description`, `remote`, `status` (active | frozen), `private`, `external`, `check`, `reviewed`.
+- `CLAUDE.md` (`@AGENTS.md`) and `.claude/settings.json` (auto memory off) are committed.
+- Paths typed as Git Bash paths (`/c/Users/...`) are normalized on Windows.
+
+### Removed
+- Transcript capture (`drafts/`, `kc draft`, Stop/PreCompact hooks, secret masking), `close`,
+  `inbox/`, `emergence`, `todo` and `update` skills, `kc pull-all|commit-push|push-all|update|
+  detach|todo|tags|ensure-wrappers|add-agent`, `adapters/`, the launcher, `tags.yml`, write
+  zones, the large-file policy, the one-session warning, registry `upstream|write_zones|language|media`.
+
+## Earlier (before ADR 0015)
+
+
 ### Security
 - Private content (the core, a `private` module, or any `private`-tagged note) is pushed only to a
   verified-private origin: a local path, or a GitHub repo `gh` reports `private`. Public,

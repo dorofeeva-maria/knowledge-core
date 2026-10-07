@@ -6,7 +6,7 @@ updated: 2026-10-06
 
 # 0005. Core state: registry, todo, decisions; history is git
 
-Status: accepted · 2026-10-06
+Status: superseded by 0015 · 2026-10-06
 
 ## Context
 

@@ -6,7 +6,7 @@ updated: 2026-10-06
 
 # 0003. One branch, two remotes, rebase sync
 
-Status: accepted · 2026-10-06
+Status: superseded by 0015 · 2026-10-06
 
 ## Context
 

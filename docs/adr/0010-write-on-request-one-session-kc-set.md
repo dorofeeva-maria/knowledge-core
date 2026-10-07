@@ -6,7 +6,7 @@ updated: 2026-10-06
 
 # 0010. Write on request, one session per core, kc set
 
-Status: accepted · 2026-10-06 · supersedes the "kc set deferred" part of 0009
+Status: superseded by 0015 · 2026-10-06 · supersedes the "kc set deferred" part of 0009
 
 ## Context
 

@@ -1,0 +1,10 @@
+{
+  "autoMemoryEnabled": false,
+  "permissions": {
+    "allow": [
+      "Bash(python -m kc *)",
+      "Bash(python3 -m kc *)",
+      "Bash(git *)"
+    ]
+  }
+}

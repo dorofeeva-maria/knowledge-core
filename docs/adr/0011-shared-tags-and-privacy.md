@@ -6,7 +6,7 @@ updated: 2026-10-06
 
 # 0011. Shared tags relate modules; privacy by module or note
 
-Status: accepted · 2026-10-06
+Status: accepted, partly superseded by 0015 · 2026-10-06
 
 ## Context
 

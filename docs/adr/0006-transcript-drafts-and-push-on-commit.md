@@ -6,7 +6,7 @@ updated: 2026-10-06
 
 # 0006. Session drafts are captured transcripts; every commit is pushed
 
-Status: accepted · 2026-10-06
+Status: superseded by 0015 · 2026-10-06
 
 ## Context
 

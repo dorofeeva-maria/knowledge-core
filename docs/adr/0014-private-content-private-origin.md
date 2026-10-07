@@ -6,7 +6,7 @@ updated: 2026-10-07
 
 # 0014. Private content is pushed only to a verified-private origin
 
-Status: accepted · 2026-10-07
+Status: superseded by 0015 · 2026-10-07
 
 ## Context
 

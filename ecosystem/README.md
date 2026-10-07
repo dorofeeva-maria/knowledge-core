@@ -1,115 +1,57 @@
 # ecosystem/
 
-Core state — the orchestrator's **meta-knowledge about the ecosystem** (never domain
-knowledge). Read **only by the core**; modules never read these files. The engine ships only
-this README and `todo/README.md`; `kc bootstrap` creates the state files in your core, so
-engine updates never touch them (ADR 0009).
+The core's state: what the orchestrator knows about the ecosystem and the human — never subject
+knowledge. The engine ships only this README; `kc bootstrap` creates the files below in your
+core (ADR 0009).
 
-- `registry.yml` — canonical module facts (below).
-- `todo/` — pending work, one file per item (leftover inbox/drafts, candidates, adaptations,
-  deferred tasks); walked through at session start. See `todo/README.md`.
-- `decisions.md` — decisions about the ecosystem (module created/split/frozen/detached,
-  pending item rejected), newest first. Entry format:
+| File | What | Who writes it |
+|---|---|---|
+| `registry.yml` | the map of modules (below) | `kc new-module`, `kc add-module`, `kc set`, `kc reviewed` |
+| `memory.md` | standing facts about the human and corrections to the assistant | the agent, when the human states or corrects something lasting |
+| `todo.md` | deferred work: `## Tasks`, `## Candidates` (new module, split, process), `## Repeats` (manual procedures and how often they were done) | the agent |
+| `decisions.md` | decisions about the ecosystem (module created, split, frozen; a candidate rejected), newest first | the agent, when the human decides |
+| `instance.yml` | settings shared by your devices: `language`, `review_after_notes`, `review_after_days` | `kc bootstrap`, by hand |
+| `templates.yml` | optional: your own module templates, same format as `config/templates.yml` | by hand |
+| `devices.local.yml` | gitignored: where each module lives on each device | `kc bootstrap`, `kc new-module`, `kc add-module` |
 
-  ```markdown
-  ## YYYY-MM-DD — short title
-  - **Where:** module(s) or core
-  - **Options:** what was on the table
-  - **Chosen:** what we do, and why
-  ```
-- `tags.yml` — the shared tag vocabulary: `tags: {tag: meaning}`, kebab-case; `private` is
-  built in. Notes in modules carry `tags: [...]`; `kc tags [TAG]` lists counts and unknown tags,
-  or the notes with a tag across modules (ADR 0011).
-- `memory.md` — standing facts about the human that hold across all modules; module-specific
-  facts go to the module's own `memory.md` (ADR 0012).
-- `instance.yml` — instance settings shared by your devices: default `language`, the engine
-  URL (`upstream`).
-- History is git: the core's commits; automatic actions by `kc` are commits prefixed `auto:`
-  (`git log --grep '^auto:'`).
-- `templates.yml` — optional: your own module templates (name → `source`, `when` hint,
-  `check`), same format as the engine's defaults in `config/templates.yml`; an entry here
-  overrides the engine's. A module's chosen template is recorded in its registry entry
-  (`upstream`).
+History is git. Decisions about the **engine** are ADRs in `docs/adr/`, not here.
 
-Modules enter the registry through `kc new-module` (a new repo) or `kc add-module NAME PATH`
-(an existing repo; `--external --write-zone P` for a repo that is not yours). Change fields with
-`kc set NAME key=value ...` (`remote`, `status`, `private`, `external`, `write_zones`,
-`language`, `media`, `check`; `~` clears a field): it records the change as an `auto:` commit
-and, for `remote`, points the module's `origin` at it and pushes. Stop following a template with
-`kc detach NAME`. `kc pull-all` reports any contract mismatch.
-
-Per-device absolute paths are **not** here; they live in the gitignored device overlay
-`devices.local.yml`, created by `bootstrap`.
-
-## How to write `registry.yml`
-
-Map of `modules:`, keyed by module name. Each entry has exactly these fields — add nothing
-"just in case"; every field exists because the core reads it to decide behavior.
+## `registry.yml`
 
 ```yaml
 modules:
-  <name>:                 # key = module identity, used in todo and decisions
-    description: <text>   # what the module holds and what goes there — the map `kc registry` shows
-    remote: <git-url>     # where to clone it on a new device and where to push; ~ = local-only, not pushed yet
-    upstream: <git-url>   # the template it follows; ~ = none (bare or detached)
-    external: false       # true = not ours / limited access (e.g. a work repo); gates writes
-    write_zones: []       # only when external: paths the core may write to; [] = read-only
-    status: active        # active | frozen | disconnected
-    private: false        # true = never surface its details in unrelated/public places
-    language: ru          # optional: language to write in; absent = session language
-    media: media/         # optional: where source media goes; absent = media/; false = not kept
-    check: <command>      # optional: the module's own read-only format check, run in its root
+  <name>:                       # kebab-case; the module's identity
+    description: <text>         # one line: what it holds and what goes there — the agent routes by it
+    remote: <git-url>           # where devices clone it from and push to; ~ = this device only
+    status: active              # active | frozen
+    private: false              # true = personal content: its remote must be private, details never surface elsewhere
+    external: true              # only for repos that are not yours; absent = yours
+    check: <command>            # optional: the module's read-only format check, run in its root
+    reviewed: {date: YYYY-MM-DD, notes: N}   # last structure review (kc reviewed); absent date = never
 ```
 
-Field semantics (what each value makes the core do):
+What each value makes the core do:
 
-- **`description`** — one line: what the module holds and what belongs there. `kc registry`
-  prints it; it is the map the agent routes by. Filled from the module's README on creation;
-  change it with `kc set NAME description="…"`.
-- **`remote`** — a URL lets `bootstrap` clone the module and `close` push it. `~` (empty)
-  means the module exists only locally for now; the core skips pushing it.
-- **`upstream`** — the format-template the module follows. Every device restores it as the
-  module's `upstream` remote; `kc pull-all` rebases the module onto template updates. `~` = no
-  template: created bare, or detached with `kc detach NAME` (the remote is then removed on
-  every device). A missing key means "unknown" — the core leaves the remote alone.
-- **`external`** — `true` tells the core this repo is not ours: never write to it except
-  within `write_zones`. `false` = ours, full write (subject to `status`).
-- **`write_zones`** — meaningful only with `external: true`. Lists the sub-paths the core
-  may write into; empty list = treat the external module as read-only.
-- **`status`**
-  - `active` — full participation: read, write, pull.
-  - `frozen` — read and pull, **no writes** (retired-but-kept, e.g. an archived project).
-    "Offloaded to GitHub, read on demand" = `frozen` **and** no path in the device overlay.
-  - `disconnected` — the core ignores it entirely (no read/write/pull). The entry stays
-    so we remember it was intentionally retired, not accidentally lost.
-- **`private`** — `true` makes the core keep the module's specifics out of unrelated
-  cross-references and out of anything that could become public.
-- **`language`** — optional. The language the core writes into this module. Absent: the
-  session language (`KC_LANGUAGE`, else `instance.yml` `language`).
-- **`media`** — optional. Folder (inside the module) where processed source media goes —
-  PDFs, images, audio, video — with transcripts beside them; files over the size limit go to
-  `<media>/large/`, which the module's `.gitignore` excludes. Absent: `media/`. `false`: the
-  module keeps no media (only the distilled notes).
+- **`status: active`** — read, write, commit, sync.
+- **`status: frozen`** — yours, but the subject is closed: read and pull only; no writes, no
+  commits, no maintenance signals. Set it back to `active` to work on it again.
+- **`external: true`** — not yours (e.g. a work repo): read only. kc fast-forwards it on its
+  current branch when clean, never commits, pushes or checks it. It cannot become `active`.
+- **`private: true`** — the remote must be a private repo: checked once, when the module gets
+  its remote (`new-module`, `add-module`, `set remote=`) and at `bootstrap` (ADR 0015).
+- **`check`** — run at every session start; a non-zero exit becomes a `format:` signal.
+- **`reviewed`** — the start signal `structure:` fires when the module grew by
+  `review_after_notes` notes, or grew at all and `review_after_days` passed since this date.
 
-- **`check`** — optional. A read-only command, run in the module's root, that checks the
-  module's format (for template modules it comes from the template catalog). Run by
-  `kc pull-all` and in `close`; a non-zero exit is reported as format issues (ADR 0008).
-- **`status: frozen`** with no path on this device — read it on demand from `remote` (web/API).
+A module's processes are not listed here: they are the module's own Claude Code skills
+(`.claude/skills/<name>/SKILL.md`), which `kc registry` reads from the module itself.
 
-Settings are optional, so any repo can be a module as is (ADR 0007). When a module is created
-or promoted, the agent also writes the same conventions in plain words into the module's own
-`AGENTS.md` ("Write in Russian. Keep source files in media/."), so an assistant working in the
-module alone follows them too. If the two disagree, the agent proposes to sync them.
-
-Not stored here, on purpose: per-device presence (device overlay path present or absent).
-
-## How to write the device overlay `devices.local.yml` (gitignored)
-
-Keyed by device id (matching `KC_DEVICE_ID` in `.env`). Only paths — a module absent from
-`paths` simply is not on this device.
+## `devices.local.yml`
 
 ```yaml
-<device-id>:
+<device-id>:            # KC_DEVICE_ID from .env
   paths:
     <module>: /absolute/path/on/this/device
 ```
+
+A module missing from `paths` is not on this device; kc skips it.

@@ -1,10 +1,13 @@
-"""Locate the core and load its registry / device overlay / .env.
+"""Locate the core and read/write its state: registry, instance settings, device overlay, .env.
 
-The core is a checkout of the engine (`kc/` + `ecosystem/`). Its state files are created by
-`kc bootstrap`, never shipped by the engine (ADR 0009), and read only by the core.
+The core is a fork of the engine (`kc/` + `ecosystem/`). Its state files are created by
+`kc bootstrap`, never shipped by the engine (ADR 0009).
 """
 import os
+import re
 from pathlib import Path
+
+STATUSES = ("active", "frozen")
 
 
 def is_core(d):
@@ -23,6 +26,26 @@ def find_core(start=None):
     return None
 
 
+def yaml():
+    try:
+        import yaml as _y
+        return _y
+    except ImportError:
+        raise SystemExit("kc: PyYAML is required — install it (pip install pyyaml)")
+
+
+def read_yaml(path):
+    path = Path(path)
+    return (yaml().safe_load(path.read_text(encoding="utf-8")) or {}) if path.exists() else {}
+
+
+def write_yaml(path, data):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(yaml().safe_dump(data, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8", newline="\n")
+
+
 def load_env(core):
     env = {}
     f = core / ".env"
@@ -33,50 +56,64 @@ def load_env(core):
                 continue
             k, v = line.split("=", 1)
             env[k.strip()] = v.strip()
-    for k in ("KC_DEVICE_ID", "KC_LANGUAGE", "KC_CORE"):  # real env wins
+    for k in ("KC_DEVICE_ID",):  # real env wins
         if os.environ.get(k):
             env[k] = os.environ[k]
     return env
 
 
-def _yaml():
-    try:
-        import yaml
-        return yaml
-    except ImportError:
-        raise SystemExit("kc: PyYAML is required — install it (pip install pyyaml)")
+def registry_path(core):
+    return core / "ecosystem" / "registry.yml"
 
 
 def load_registry(core):
-    yaml = _yaml()
-    f = core / "ecosystem" / "registry.yml"
-    if not f.exists():
-        return {}
-    data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
-    return data.get("modules") or {}
+    return read_yaml(registry_path(core)).get("modules") or {}
+
+
+def save_registry(core, modules):
+    write_yaml(registry_path(core), {"modules": modules})
 
 
 def load_instance(core):
-    f = core / "ecosystem" / "instance.yml"
-    if not f.exists():
-        return {}
-    return _yaml().safe_load(f.read_text(encoding="utf-8")) or {}
+    return read_yaml(core / "ecosystem" / "instance.yml")
 
 
-def load_devices(core):
-    f = core / "ecosystem" / "devices.local.yml"
-    if not f.exists():
-        return {}
-    return _yaml().safe_load(f.read_text(encoding="utf-8")) or {}
+def device_id(core):
+    return load_env(core).get("KC_DEVICE_ID")
 
 
-def resolve(core):
-    """(modules, device_id). Each module: name, path(Path|None), status, external,
-    write_zones, private, remote, upstream."""
+def devices_path(core):
+    return core / "ecosystem" / "devices.local.yml"
+
+
+def norm_path(p):
+    """A path typed by the human, absolute. On Windows, Git Bash paths (`/c/Users/...`) are
+    turned into `C:/Users/...` so Python and git agree on them."""
+    p = str(p).strip()
+    if os.name == "nt":
+        m = re.match(r"^/([a-zA-Z])(/.*)?$", p)
+        if m:
+            p = f"{m.group(1).upper()}:{m.group(2) or '/'}"
+    return Path(p).expanduser().resolve()
+
+
+def set_path(core, name, dest):
+    """Record where module `name` lives on this device (gitignored overlay)."""
+    did = device_id(core)
+    if not did:
+        print("  (KC_DEVICE_ID unset — path not recorded; run kc bootstrap)")
+        return
+    data = read_yaml(devices_path(core))
+    data.setdefault(did, {}).setdefault("paths", {})[name] = str(dest)
+    write_yaml(devices_path(core), data)
+
+
+def modules(core):
+    """Registry entries merged with this device's paths. Each: name, path (Path|None), status,
+    external, private, remote, check, description, reviewed."""
     reg = load_registry(core)
-    env = load_env(core)
-    did = env.get("KC_DEVICE_ID")
-    paths = ((load_devices(core).get(did) or {}).get("paths") or {}) if did else {}
+    did = device_id(core)
+    paths = ((read_yaml(devices_path(core)).get(did) or {}).get("paths") or {}) if did else {}
     out = []
     for name, m in reg.items():
         m = m or {}
@@ -84,16 +121,12 @@ def resolve(core):
         out.append({
             "name": name,
             "path": Path(p).expanduser().resolve() if p else None,
-            "status": m.get("status", "active"),
-            "external": bool(m.get("external", False)),
-            "write_zones": m.get("write_zones") or [],
-            "private": bool(m.get("private", False)),
+            "status": m.get("status") or "active",
+            "external": m.get("external") is True,
+            "private": m.get("private") is True,
             "remote": m.get("remote"),
-            "upstream": m.get("upstream") if "upstream" not in m or m.get("upstream")
-                        else "detached",
-            "language": m.get("language"),
-            "media": m.get("media", "media/"),
             "check": m.get("check"),
-            "description": m.get("description"),
+            "description": m.get("description") or "",
+            "reviewed": m.get("reviewed") or {},
         })
-    return out, did
+    return out

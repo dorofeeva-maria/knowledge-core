@@ -1,10 +1,10 @@
-# Engine default catalog of module templates (ADR 0009). Your own templates go to
-# ecosystem/templates.yml in your core, same format; an entry there overrides one here.
-# `source` may be a git URL or a local path; `check` is the template's read-only format check,
-# copied into the registry of each module created from it (ADR 0008).
+# Default catalog of module templates. Your own go to ecosystem/templates.yml in your core,
+# same format; an entry there overrides one here. `source` is a git URL or a local path; its
+# files are copied into the new module (no link back). `check` is the template's read-only
+# format check, copied into the registry of each module created from it.
 # See docs/templates.md for how templates are authored.
 templates:
   info:
     source: https://github.com/dorofeeva-maria/template-info.git
-    when: A knowledge module — notes and references (entities / concepts / summaries).
+    when: A knowledge module — notes and references (entities / concepts / summaries / analyses).
     check: python tools/notes.py check

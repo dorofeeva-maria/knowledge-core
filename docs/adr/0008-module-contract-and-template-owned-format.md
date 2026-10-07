@@ -6,7 +6,7 @@ updated: 2026-10-06
 
 # 0008. Module contract; format tools belong to templates
 
-Status: accepted · 2026-10-06
+Status: accepted, partly superseded by 0015 · 2026-10-06
 
 ## Context
 

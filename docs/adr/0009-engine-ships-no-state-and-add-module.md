@@ -6,7 +6,7 @@ updated: 2026-10-06
 
 # 0009. The engine ships no core state; existing repos join with add-module
 
-Status: accepted · 2026-10-06
+Status: accepted, partly superseded by 0015 · 2026-10-06
 
 ## Context
 

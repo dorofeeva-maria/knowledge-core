@@ -1,52 +1,33 @@
-# Authoring a format-template
+# Authoring a module template
 
-A **format-template** is a separate git repo that scaffolds a recurring *kind* of module. New
-modules are forked from it (the fork sets the template as `upstream`; see the fork model in
-`architecture.md`). The catalog of available templates is the engine's `config/templates.yml` plus your core's
-`ecosystem/templates.yml`.
+A **template** is a repo with the starting files of a recurring kind of module. `kc new-module
+--template T` copies its files into a fresh repo with its own history; the module never hears
+from the template again (ADR 0015). The catalog is the engine's `config/templates.yml` plus your
+core's `ecosystem/templates.yml`.
 
 ## Rules
 
-- **No ecosystem references.** A template's files *are* the new module's starting content —
-  all inherited by the fork. So a template must read as a normal, standalone repo: no mention
-  of the core, registry, `kc`, "ecosystem", the fork model, or its own template-ness. (This
-  authoring doc is the only place that talks about templates — it lives in the engine, never
-  inside a template.)
-- **Ship placeholders, rewritten on first use.** A module `AGENTS.md` describing the module, a
-  `README`, a folder skeleton, maybe a starter note — all clearly meant to be replaced.
-- **Encode the type's structure** (folders, starter notes) so a new module of this kind starts
-  shaped right. Keep it minimal; don't over-impose.
-- **The template owns its format tools.** If the format has rules a machine can check (an
-  index, frontmatter, links, log size), ship the tools in the template (e.g. `tools/`) and
-  describe them in its `AGENTS.md`, so a module opened alone can keep itself in shape. Declare
-  the read-only check command in the catalog (field `check`); the
-  core copies it into the registry of each new module and runs it (ADR 0008). Other
-  model-agnostic scripts or automations are welcome too. No ecosystem references.
-- **Fork model:** a module keeps its content on `main`; the template is its `upstream` and
-  template changes are rebased under the module's content. So publish changes that a module
-  can absorb; describe any change that needs module content adapted in the commit message.
+- **Standalone.** A template's files become the module's files, so they read as a normal repo:
+  no mention of the core, the registry, `kc`, or of being a template.
+- **`CLAUDE.md` = `@AGENTS.md`.** `AGENTS.md` tells an assistant, working in the module alone,
+  how to keep it: note format, folders, links, media, language, how to commit.
+- **Placeholders, rewritten on first use.** `AGENTS.md`, `README.md`, starter notes — clearly
+  meant to be replaced with the module's real purpose.
+- **Links are relative markdown links** (`[text](../concepts/x.md)`), so they work on GitHub and
+  in any editor. They never leave the repo.
+- **Processes are Claude Code skills**: `.claude/skills/<name>/SKILL.md` with `name` and
+  `description` in the frontmatter. A template may ship some; most appear through use.
+- **Format tools ship with the template** (e.g. `tools/`), with a read-only check command
+  declared in the catalog (`check`); the core runs it at every session start.
+- **`.gitignore`** lists what stays on the device (large media, recordings).
 
-## Checklist (before publishing or extracting a template)
+## Checklist before publishing
 
-1. **No ecosystem references:** read the template's files — none may mention the core, the
-   registry, `kc`, the fork model, or its own template-ness (a module opened alone would break
-   on such instructions).
-2. **Standalone adequacy:** `AGENTS.md` alone lets an assistant build an adequate module
-   *without the core* — it explains, in tool-neutral terms, how to add notes (frontmatter +
-   TL;DR), the folder structure, how to link, and how to keep `index.md` and `log.md`. If an
-   assistant with only this repo couldn't produce a sensible module, the template is not ready.
-
-## Using a template (fork → first-use rewrite)
-
-`kc new-module` forks the template and sets it as `upstream` (content stays on `main`). Then the
-assistant **clarifies the new module's purpose and structure with the user** and
-rewrites the placeholders into the module's real identity, removing any leftover template text.
-The module repo must end up with zero ecosystem references. See the `emergence` skill.
+1. No ecosystem references in any file.
+2. `AGENTS.md` alone lets an assistant build a sensible module without the core.
+3. The template's own files pass its `check`.
 
 ## How a template is born
 
-Do not invent process-type templates up front — a single generic one is usually pointless.
-Let a module's shape stabilize through real work, then extract the common shape into a template
-(`emergence` → "extract a format-template"). The engine's default catalog
-(`config/templates.yml`) lists a single template, `info`, which lives in its own repo; process
-templates emerge from use and go into your core's `ecosystem/templates.yml`.
+Don't invent one up front. Let a module's shape settle through real work, then copy the common
+shape into a template repo and add it to `ecosystem/templates.yml`.

@@ -1,17 +1,51 @@
-"""kc bootstrap — set up this device for a core fork.
+"""kc bootstrap — set up this device for a core. Idempotent and re-runnable.
 
-Idempotent and re-runnable. Installs the `kc` launcher on PATH, configures the device
-(`.env` + device overlay), installs the chosen assistants, and sets up (or skips) each
-registry module on this device. External modules default to *not* set up locally.
+1. Instance settings and the core's state files (created here, never shipped — ADR 0009).
+2. This device's id (`.env`) and module paths (`ecosystem/devices.local.yml`), cloning modules
+   that have a remote.
+3. The privacy check: the core and every private module must have a private remote (ADR 0015).
+4. Claude Code hooks for this device (`.claude/settings.local.json`): sync at session start and end.
 """
-import os
+import json
 import platform
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from . import core as C
-from . import wrappers
-from . import gitsync
+from . import git as G
+
+STATE = {
+    "registry.yml": "modules: {}\n",
+    "memory.md": """# Memory
+
+Standing facts about the human and corrections to the assistant — read at every session start.
+One bullet each: the fact, then **Why:** in a few words. Update or remove a fact that turns out
+wrong. Rules that belong to one module go to that module's `AGENTS.md`, not here.
+""",
+    "todo.md": """# Todo
+
+Deferred work. One line per item; delete the line when it is done or rejected.
+
+## Tasks
+
+## Candidates
+
+## Repeats
+
+<!-- A manual procedure done more than once: `- 2× · what was done · module · last YYYY-MM-DD`.
+     Bump the count each time; at 3× kc raises it at session start. -->
+""",
+    "decisions.md": """# Decisions
+
+Decisions about this ecosystem (module created, split, frozen; a candidate rejected), newest
+first:
+
+    ## YYYY-MM-DD — short title
+    - **Options:** what was on the table
+    - **Chosen:** what we do, and why
+""",
+}
 
 
 def _ask(prompt, default=None, yes=False):
@@ -31,174 +65,116 @@ def _ask_yn(prompt, default=True, yes=False):
     return default if not v else v.lower().startswith("y")
 
 
-def _write(path, text):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8", newline="\n")
-
-
-def _load_yaml(path):
-    return (C._yaml().safe_load(path.read_text(encoding="utf-8")) or {}) if path.exists() else {}
-
-
-def _dump_yaml(path, data):
-    _write(path, C._yaml().safe_dump(data, sort_keys=False, allow_unicode=True))
-
-
-def install_launcher(core):
-    bindir = Path.home() / ".local" / "bin"
-    bindir.mkdir(parents=True, exist_ok=True)
-    if os.name == "nt":
-        launcher = bindir / "kc.cmd"
-        launcher.write_text(
-            f'@echo off\r\nset "KC_CORE={core}"\r\n'
-            f'set "PYTHONPATH={core};%PYTHONPATH%"\r\npython -m kc %*\r\n',
-            encoding="utf-8", newline="\n")
-    else:
-        launcher = bindir / "kc"
-        launcher.write_text(
-            f'#!/bin/sh\nexport KC_CORE="{core}"\n'
-            f'export PYTHONPATH="{core}:$PYTHONPATH"\nexec python3 -m kc "$@"\n',
-            encoding="utf-8", newline="\n")
-        launcher.chmod(0o755)
-    on_path = str(bindir) in os.environ.get("PATH", "").split(os.pathsep)
-    return launcher, on_path
-
-
-def _git(path, *args):
-    return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True, encoding="utf-8", errors="replace")
-
-
-def _gh_ready():
-    """'ok' | 'unauthed' | 'missing' — gh is needed to verify private origins (ADR 0014)."""
-    if not shutil.which("gh"):
-        return "missing"
-    r = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True)
-    return "ok" if r.returncode == 0 else "unauthed"
-
-
-def _wire_core(core, inst):
-    """Ensure the core is on `main` and has its `upstream` (engine) remote.
-    Records an existing upstream URL into instance settings so other devices can re-add it."""
-    if not (core / ".git").exists():
-        return
-    if _git(core, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() != "main":
-        print("  note: the core should be on branch 'main' (ADR 0003); switch with `git checkout main`")
-    remotes = _git(core, "remote").stdout.split()
-    up = inst.get("upstream")
-    if up and "upstream" not in remotes:
-        _git(core, "remote", "add", "upstream", up)
-    elif "upstream" in remotes and "upstream" not in inst:   # first device: learn the URL
-        url = _git(core, "remote", "get-url", "upstream").stdout.strip()
-        if url:
-            inst["upstream"] = url
-
-
-DECISIONS_HEADER = """# Decisions
-
-Decisions about this ecosystem, newest first. Format: see `ecosystem/README.md`.
-"""
-
-
-TAGS_HEADER = """# Shared tag vocabulary (ADR 0011): tag -> what it means. kebab-case.
-# `private` is built in. Add a tag here when you first use it in a note.
-tags: {}
-"""
-
-
-MEMORY_HEADER = """# Memory
-
-Standing facts about the human that hold across all modules (ADR 0012) — read at session start.
-One bullet each: the fact, then **Why:** in a few words. A fact that belongs to one subject goes
-to that module's own `memory.md` instead.
-"""
-
-
 def ensure_state(core):
-    """Create the core's state files the engine does not ship (ADR 0009). Returns new paths."""
     created = []
-    eco = core / "ecosystem"
-    for rel, text in (("registry.yml", "modules: {}\n"), ("decisions.md", DECISIONS_HEADER),
-                      ("tags.yml", TAGS_HEADER), ("memory.md", MEMORY_HEADER)):
-        f = eco / rel
+    for rel, text in STATE.items():
+        f = core / "ecosystem" / rel
         if not f.exists():
-            _write(f, text)
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(text, encoding="utf-8", newline="\n")
             created.append(f"ecosystem/{rel}")
-    (eco / "todo").mkdir(parents=True, exist_ok=True)
     return created
 
 
-def run(core, device_id=None, agents=None, language=None, yes=False):
-    # 1. instance language -> ecosystem/instance.yml (committed, shared across devices)
+def install_hooks(core):
+    """Write this device's hooks into `.claude/settings.local.json` (gitignored), with the
+    absolute path of this Python, so hooks work the same in any shell. Other keys are kept."""
+    f = core / ".claude" / "settings.local.json"
+    data = {}
+    if f.exists():
+        try:
+            data = json.loads(f.read_text(encoding="utf-8") or "{}")
+        except json.JSONDecodeError as e:
+            raise SystemExit(f"kc bootstrap: {f} is not valid JSON ({e}) — fix it, then re-run; "
+                             f"nothing was overwritten")
+    py = Path(sys.executable).as_posix()
+    run = lambda ev: f'cd "$CLAUDE_PROJECT_DIR" && "{py}" -m kc hook {ev}'
+    hooks = data.setdefault("hooks", {})
+    hooks["SessionStart"] = [{"matcher": "startup|resume|clear",
+                              "hooks": [{"type": "command", "command": run("start"), "timeout": 120}]}]
+    hooks["SessionEnd"] = [{"hooks": [{"type": "command", "command": run("end"), "timeout": 60}]}]
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    return f
+
+
+def _gh_status():
+    r = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True) if shutil.which("gh") else None
+    return "missing" if r is None else ("ok" if r.returncode == 0 else "not logged in")
+
+
+def run(core, device_id=None, language=None, yes=False):
+    # 1. instance + state
     inst_path = core / "ecosystem" / "instance.yml"
-    inst = _load_yaml(inst_path)
+    inst = C.read_yaml(inst_path)
     if language:
         inst["language"] = language
-    elif "language" not in inst:
-        inst["language"] = _ask("Instance language (e.g. en, ru)", "en", yes) or "en"
-    _wire_core(core, inst)
-    _dump_yaml(inst_path, inst)
+    if "language" not in inst:
+        inst["language"] = _ask("Language to write in (e.g. en, ru)", "en", yes) or "en"
+    inst.setdefault("review_after_notes", 25)
+    inst.setdefault("review_after_days", 60)
+    C.write_yaml(inst_path, inst)
     created = ensure_state(core)
-    gitsync.auto_commit(core, ["ecosystem/instance.yml"] + created,
-                        "configure instance (language, upstream)" + (", create core state" if created else ""))
+    G.git(core, "add", "ecosystem/instance.yml", *created)
+    G.git(core, "commit", "-q", "-m", "core: instance settings and state files",
+          "--", "ecosystem/instance.yml", *created)
 
-    # 2. device id -> .env (gitignored, per-device)
+    # 2. privacy: the core always holds private content
+    url = G.origin_url(core)
+    problem = G.private_problem(url) if url else None
+    if problem:
+        raise SystemExit(f"kc bootstrap: STOP — the core's origin: {problem}.\n"
+                         f"  The core holds personal content and is pushed automatically. Point it at "
+                         f"a private repo:\n  git remote set-url origin <private-url>   (then re-run)")
+
+    # 3. device
     if not device_id:
         device_id = _ask("Device id for this machine", platform.node() or "device", yes)
     env_path = core / ".env"
     keep = [l for l in (env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else [])
             if l.strip() and not l.strip().startswith("KC_DEVICE_ID=")]
-    _write(env_path, "\n".join([f"KC_DEVICE_ID={device_id}"] + keep) + "\n")
+    env_path.write_text("\n".join([f"KC_DEVICE_ID={device_id}"] + keep) + "\n", encoding="utf-8", newline="\n")
 
-    # 3. kc launcher on PATH
-    launcher, on_path = install_launcher(core)
-
-    # 4. assistants
-    if not agents:
-        a = _ask("Assistants on this device (comma-separated)", "claude", yes)
-        agents = [x.strip() for x in (a or "").split(",") if x.strip()]
-    for ag in agents:
-        wrappers.add_agent(core, ag)
-
-    # 5. per-module setup on this device
-    devices_path = core / "ecosystem" / "devices.local.yml"
-    devices = _load_yaml(devices_path)
+    # 4. modules on this device
+    devices = C.read_yaml(C.devices_path(core))
     paths = devices.setdefault(device_id, {}).setdefault("paths", {})
+    warnings = []
     for name, m in C.load_registry(core).items():
         m = m or {}
-        if m.get("status") == "disconnected":
-            continue
-        ext = bool(m.get("external"))
+        ext = m.get("external") is True
         if not _ask_yn(f"Set up module '{name}'{' (external)' if ext else ''} on this device?",
                        default=not ext, yes=yes):
             paths.pop(name, None)
             continue
-        p = _ask(f"  path for '{name}'", str(core.parent / "projects" / name), yes)
-        dest = Path(p).expanduser()
+        default = paths.get(name) or str(core.parent / "projects" / name)
+        dest = C.norm_path(_ask(f"  path for '{name}'", default, yes))
         remote = m.get("remote")
         if not dest.exists():
-            if remote:
-                print(f"  cloning {remote} -> {dest}")
-                if subprocess.run(["git", "clone", remote, str(dest)]).returncode != 0:
-                    print(f"  clone failed — skipping '{name}'")
-                    continue
-            else:
-                print(f"  '{name}' is local-only (no remote) and not present here — "
-                      f"can't set it up on this device; skipping")
+            if not remote:
+                print(f"  '{name}' has no remote and is not here — skipped")
                 paths.pop(name, None)
                 continue
-        if not ext and (dest / ".git").exists():
-            up = m.get("upstream") if "upstream" not in m or m.get("upstream") else gitsync.DETACHED
-            gitsync.prepare(dest, up)   # rerere + restore the template remote on this device
-        paths[name] = p
-    _dump_yaml(devices_path, devices)
+            print(f"  cloning {remote} -> {dest}")
+            if subprocess.run(["git", "clone", "--quiet", remote, str(dest)]).returncode != 0:
+                print(f"  clone failed — skipped '{name}'")
+                continue
+        if m.get("private") and remote:
+            p = G.private_problem(remote)
+            if p:
+                warnings.append(f"module '{name}' is private but {p}")
+        paths[name] = str(dest)
+    C.write_yaml(C.devices_path(core), devices)
 
-    gh = _gh_ready()
+    # 5. hooks
+    hooks = install_hooks(core)
+
     print("\nbootstrap complete:")
-    print(f"  core    {core}")
+    print(f"  core      {core}")
     print(f"  device    {device_id}")
     print(f"  language  {inst['language']}")
-    print(f"  kc        {launcher}" + ("" if on_path else f"   (add {launcher.parent} to PATH)"))
-    print(f"  agents    {', '.join(agents) or '(none)'}")
     print(f"  modules   {', '.join(paths) or '(none yet)'}")
-    print(f"  gh        {gh}" + ("" if gh == "ok" else
-          "   — private pushes refuse without it: install gh + `gh auth login` (ADR 0014)"))
+    print(f"  hooks     {hooks.relative_to(core).as_posix()} (sync at session start and end)")
+    print(f"  gh        {_gh_status()}")
+    for w in warnings:
+        print(f"  WARNING   {w}")
+    return 1 if warnings else 0

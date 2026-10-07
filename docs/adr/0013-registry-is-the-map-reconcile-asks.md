@@ -6,7 +6,7 @@ updated: 2026-10-06
 
 # 0013. The registry is the map; reconciling always asks; artifacts assessed on creation
 
-Status: accepted · 2026-10-06
+Status: accepted, partly superseded by 0015 · 2026-10-06
 
 ## Context
 
