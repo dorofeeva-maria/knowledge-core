@@ -10,6 +10,7 @@ Run it from the core root: `python3 -m kc …` (on Windows: `python -m kc …`).
                  [--path P] [--remote URL] [--private] [--description TEXT]
   kc add-module NAME PATH [--external] [--private] [--description TEXT] [--check CMD]
   kc set NAME key=value ...       description, remote, status (active|frozen), private, check
+  kc attach NAME [--path P]       set up here a module registered on another device
   kc reviewed NAME                mark a module's structure as reviewed (resets the signal)
   kc sync [-m MSG]                commit leftovers, pull, push: the core + modules on this device
   kc status                       local state of every repo + maintenance signals (no network)
@@ -65,6 +66,10 @@ def _parser():
     s.add_argument("name")
     s.add_argument("pairs", nargs="+", metavar="key=value")
 
+    t = sub.add_parser("attach", help="set up here a module registered on another device")
+    t.add_argument("name")
+    t.add_argument("--path", help="where it lives or is cloned to (default: <core>/../projects/NAME)")
+
     r = sub.add_parser("reviewed", help="mark a module's structure as reviewed")
     r.add_argument("name")
 
@@ -107,6 +112,9 @@ def main(argv):
     if args.cmd == "set":
         from . import registry
         return registry.set_fields(core, args.name, args.pairs)
+    if args.cmd == "attach":
+        from . import bootstrap
+        return bootstrap.attach(core, args.name, args.path)
     if args.cmd == "reviewed":
         from . import registry
         return registry.mark_reviewed(core, args.name)

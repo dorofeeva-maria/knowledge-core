@@ -196,7 +196,7 @@ def hook(core, event):
             missing = [m["name"] for m in C.modules(core) if not m["path"]]
             if missing:
                 print("kc: in the registry but not set up on this device: " + ", ".join(missing)
-                      + " (set up: python -m kc bootstrap)")
+                      + " (set one up here: python -m kc attach NAME)")
             sig = signals(core)
             _print("kc signals (raise these with the human — see AGENTS.md):", sig)
             if not sig:

@@ -47,6 +47,50 @@ first:
 }
 
 
+try:                                     # typed paths may be Cyrillic: read stdin as UTF-8
+    sys.stdin.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
+
+def clone(remote, dest):
+    """Clone a module; on failure remove what the clone left behind. Returns True on success."""
+    dest = Path(dest)
+    existed = dest.exists()
+    r = subprocess.run(["git", *G.LONGPATHS, "clone", "--quiet", remote, str(dest)])
+    if r.returncode != 0 and not existed and dest.exists():
+        shutil.rmtree(dest, ignore_errors=True)
+    if r.returncode == 0 and G.LONGPATHS:
+        G.git(dest, "config", "core.longpaths", "true")
+    return r.returncode == 0
+
+
+def attach(core, name, path=None):
+    """`kc attach NAME [--path P]` — set up on this device a module registered elsewhere."""
+    m = C.load_registry(core).get(name)
+    if m is None:
+        raise SystemExit(f"kc attach: no module '{name}' in the registry")
+    did = C.device_id(core)
+    if not did:
+        raise SystemExit("kc attach: this device is not set up — run kc bootstrap first")
+    dest = C.norm_path(path) if path else (core.parent / "projects" / name).resolve()
+    remote = (m or {}).get("remote")
+    if not dest.exists():
+        if not remote:
+            raise SystemExit(f"kc attach: '{name}' has no remote and is not at {dest}")
+        print(f"cloning {remote} -> {dest}")
+        if not clone(remote, dest):
+            raise SystemExit(f"kc attach: clone failed — nothing changed")
+    elif not G.is_repo(dest):
+        raise SystemExit(f"kc attach: {dest} exists but is not a git repo")
+    if (m or {}).get("private") and remote:
+        G.enforce_private(remote, "kc attach")
+    C.set_path(core, name, dest)
+    C.grant_module_dirs(core)
+    print(f"attached '{name}' on this device: {dest}")
+    return 0
+
+
 def _ask(prompt, default=None, yes=False):
     if yes:
         return default
@@ -152,7 +196,7 @@ def run(core, device_id=None, language=None, yes=False):
                 paths.pop(name, None)
                 continue
             print(f"  cloning {remote} -> {dest}")
-            if subprocess.run(["git", "clone", "--quiet", remote, str(dest)]).returncode != 0:
+            if not clone(remote, dest):
                 print(f"  clone failed — skipped '{name}'")
                 continue
         if m.get("private") and remote:

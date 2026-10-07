@@ -43,7 +43,11 @@ python3 -m kc bootstrap
 ```
 
 For each module, choose whether it lives on this device and where; modules with a remote are
-cloned. A module without a remote stays on the device where it was created.
+cloned. A module without a remote stays on the device where it was created. Re-running
+`bootstrap` keeps the device id and the modules already set up here.
+
+A module created later on another device shows up in the start report as "not set up on this
+device"; set it up with `python3 -m kc attach NAME [--path P]`.
 
 ## Day to day
 

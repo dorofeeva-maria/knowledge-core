@@ -5,6 +5,31 @@ decisions behind changes are in `docs/adr/`.
 
 ## Unreleased
 
+### Fixed — findings of the blind and persona tests (2026-10-07)
+- `kc bootstrap` keeps the existing device id and the modules already set up; validates the
+  settings file before changing anything; reads typed paths as UTF-8; removes a failed clone.
+- Sync: never commits off `main` (a detached HEAD or another branch is reported, nothing
+  committed); the core is synced before the registry is read; one time budget per hook run
+  (90 s start, 50 s end); every failure line starts with `FAIL:`; a conflict names this device's
+  and the other device's commit; "committed leftovers" lists the files; long paths on Windows;
+  files over 50 MB are left out; host rejections (secret, large file, pre-receive) explained.
+- Privacy: an `origin` that differs from the registry's `remote` is not synced; a non-private
+  module never pushes notes tagged `private`; a public GitHub remote is refused for private
+  content, an unverifiable one (not GitHub, no `gh`) gives a warning instead of a hard stop;
+  SSH host aliases are no longer mistaken for local paths.
+- Registry: duplicate keys, invalid flags (`status: Frozen`, `external: "true"`) and conflict
+  markers are reported clearly; invalid entries are skipped, never guessed.
+- `new-module` refuses a non-empty remote; Git Bash paths accepted in `--remote` and
+  `--template-url`; `--check`; `kc set remote=` validates the remote.
+- `todo.md` parsing ignores comments and code, accepts loose repeat lines, dedupes.
+
+### Added
+- `kc attach NAME [--path P]` — set up a module registered on another device.
+- The start report lists modules registered but not set up on this device.
+- `.claude/settings.json` denies `git reset --hard`, `git push --force/-f`, `git clean`.
+- `study` template in the default catalog.
+
+
 ### Changed — simplified architecture (ADR 0015)
 - The core is a one-time copy of the engine: no `upstream`, no rebasing onto engine updates, no
   force-push. Templates are copied into new modules, with no link back.

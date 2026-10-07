@@ -24,7 +24,13 @@ Who does what (ADR 0015):
      each conflicted file keeping both sides' content where both matter (ask the human when they
      contradict), `git add` it, `git -C <repo> rebase --continue`, then `kc sync`. **Never**
      `git reset --hard`, `git push --force`, `git clean` or delete commits: kc keeps local commits
-     safe, and these would lose them.
+     safe, and these would lose them. In a conflict, the local side (`HEAD`) is **this device**
+     and `origin/main` is **the other device(s)** — the report names both; never mix them up when
+     showing the human which decision came from where.
+   - `committed leftovers (files…)` — a previous session ended without committing. Tell the human
+     which files were committed and check them with `git -C <repo> show --stat HEAD` if unsure.
+   - `in the registry but not set up on this device: …` — mention it once. If the human needs one
+     of them here: `python -m kc attach NAME [--path P]`.
    - `format:` — fix mechanical problems yourself right away (run the module's check with `-v`,
      fix, commit); show content problems to the human.
    - `structure:` — the module grew: look at it and propose what to do (split, new module, a
@@ -58,10 +64,15 @@ There is no "close" step: whatever is not written during the session is lost.
   file — ask for the path if it should be kept. Large or device-only files go into the module's
   own `.gitignore`.
 - **Commit with meaning.** After writing into a module, commit there with a message about that
-  module, in the module's language: `git -C <module> add -A && git -C <module> commit -m "…"`. The end hook pushes it and
+  module, in the module's language — as two separate commands, `git -C <module> add -A` then
+  `git -C <module> commit -m "…"` (single commands are pre-approved; `cd … &&` chains are not).
+  Run a module's check the same way: `python <module>/tools/notes.py check`. The end hook pushes it and
   commits anything you left (as `auto: sync`). Run `kc sync` yourself when the human switches
   devices or asks.
 - Never write into a `frozen` or `external` module, and never commit one.
+- **A domain whose module is not on this device is off-limits.** Its rules live in that module
+  (e.g. calendar rules in a planning module): without them, don't act in that domain — and don't
+  use external tools that write there (a calendar, a mailbox). Offer `kc attach NAME` instead.
 
 ## Running a module's process
 

@@ -26,6 +26,7 @@ behind this shape are in [ADR 0015](adr/0015-simplified-architecture.md).
 | Process | Step | Owner |
 |---|---|---|
 | New device | clone the core and modules, record paths, check privacy, install hooks, grant Claude access to module folders | `kc bootstrap` |
+| A module added on another device | clone it here, record its path | `kc attach NAME` |
 | Session start | commit leftovers, pull and push every repo | start hook → `kc sync` |
 | | run module checks, compute signals | start hook → `kc` |
 | | read memory and the report; fix mechanics; raise what is due | agent |

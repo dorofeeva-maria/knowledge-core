@@ -21,9 +21,12 @@ _ENV = {**os.environ, "GIT_EDITOR": "true", "GIT_TERMINAL_PROMPT": "0", "GCM_INT
         "GIT_SSH_COMMAND": os.environ.get("GIT_SSH_COMMAND", "ssh -o BatchMode=yes")}
 
 
+LONGPATHS = ["-c", "core.longpaths=true"] if os.name == "nt" else []   # paths over 260 chars
+
+
 def git(path, *args, timeout=None):
     try:
-        return subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True,
+        return subprocess.run(["git", *LONGPATHS, "-C", str(path), *args], capture_output=True, text=True,
                               encoding="utf-8", errors="replace", env=_ENV, timeout=timeout)
     except subprocess.TimeoutExpired:
         return subprocess.CompletedProcess(list(args), 124, "", f"timed out after {timeout}s")
@@ -124,8 +127,9 @@ def commit_all(path, message):
             big.append(f)
     if git(path, "diff", "--cached", "--quiet").returncode == 0:
         return None, big
+    files = git(path, "diff", "--cached", "--name-only").stdout.split("\n")
     r = git(path, "commit", "-q", "-m", message)
-    return (r.returncode == 0, first(r.stderr) or last(r.stdout)), big
+    return (r.returncode == 0, first(r.stderr) or last(r.stdout), [f for f in files if f]), big
 
 
 def current_branch(path):
@@ -189,7 +193,8 @@ def sync_own(path, message, frozen=False, remote=None, private=True, budget=None
         if res and not res[0]:
             return ", ".join(notes + [f"commit failed: {res[1]}"]), True
         if res:
-            notes.append("committed leftovers")
+            shown = ", ".join(res[2][:5]) + (f" +{len(res[2]) - 5} more" if len(res[2]) > 5 else "")
+            notes.append(f"committed leftovers ({shown})")
     if not has_origin(path):
         return ", ".join(notes + ["no remote — stays on this device"]), False
     if remote and not same_url(origin_url(path), remote):
@@ -216,7 +221,10 @@ def sync_own(path, message, frozen=False, remote=None, private=True, budget=None
             if r.returncode != 0:
                 files = git(path, "diff", "--name-only", "--diff-filter=U").stdout.split()
                 git(path, "rebase", "--abort")
-                what = (f"CONFLICT with origin ({', '.join(files[:3])})" if files
+                def side(ref):
+                    return git(path, "log", "-1", "--format=%h %s", ref).stdout.strip()
+                what = (f"CONFLICT with origin ({', '.join(files[:3])}): THIS device has "
+                        f"[{side('HEAD')}], the OTHER device(s) pushed [{side('origin/' + BRANCH)}]" if files
                         else f"rebase onto origin failed ({first(r.stderr)})")
                 return ", ".join(notes + [f"{what} — not pushed, local commits kept; resolve: "
                                           f"git -C \"{path}\" pull --rebase origin {BRANCH}"]), True
