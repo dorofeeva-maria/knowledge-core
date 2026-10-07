@@ -138,3 +138,7 @@ memory is off in the core.
 - Large tasks (many files, several modules): state the scale first and let the human choose
   now / in the background / later (ADR 0004).
 - When what you find disagrees with what is recorded (registry, a note, memory), ask.
+- Anything you leave for later ("update at the next review") goes into `ecosystem/todo.md` —
+  a promise that lives only in a note is lost.
+- Dates: compute weekdays with a tool before writing them (`python -c "import datetime; …"`);
+  never guess "Thursday 09.10".
