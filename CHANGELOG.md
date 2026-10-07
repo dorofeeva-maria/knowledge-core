@@ -22,6 +22,9 @@ decisions behind changes are in `docs/adr/`.
 - `new-module` refuses a non-empty remote; Git Bash paths accepted in `--remote` and
   `--template-url`; `--check`; `kc set remote=` validates the remote.
 - `todo.md` parsing ignores comments and code, accepts loose repeat lines, dedupes.
+- New modules go next to the existing ones by default; first commits no longer embed local paths.
+- `setup:` signal for template placeholders left in a module; the allow-list covers module tools
+  (`python */tools/notes.py`) and the PowerShell tool on Windows.
 
 ### Added
 - `kc attach NAME [--path P]` — set up a module registered on another device.

@@ -102,6 +102,17 @@ def _review_due(m, inst, today):
     return None
 
 
+PLACEHOLDER = re.compile(r"^> Replace |Replace on first use", re.M)
+
+
+def _placeholders(path):
+    for fn in ("AGENTS.md", "README.md"):
+        f = path / fn
+        if f.exists() and PLACEHOLDER.search(f.read_text(encoding="utf-8", errors="replace")):
+            return True
+    return False
+
+
 REPEAT = re.compile(r"^[-*]\s*(?:\[[ ]\]\s*)?\**\s*(\d+)\s*(?:[×xх]|times|раз[а]?)\**\s*[·:\-—]?\s*(.+)$", re.I)
 SECTIONS = {"tasks": "tasks", "задачи": "tasks", "candidates": "candidates", "кандидаты": "candidates",
             "repeats": "repeats", "повторы": "repeats"}
@@ -148,6 +159,9 @@ def signals(core):
         r = _review_due(m, inst, today)
         if r:
             rows.append((m["name"], f"structure: {r}"))
+        if _placeholders(m["path"]):
+            rows.append((m["name"], "setup: template placeholders left in AGENTS.md/README.md — "
+                                    "ask what the module is for and rewrite them"))
     counts, repeats = _todo(core)
     for r in repeats:
         rows.append(("todo", f"repeat: done 3+ times by hand — propose a process: {r}"))

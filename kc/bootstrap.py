@@ -73,7 +73,7 @@ def attach(core, name, path=None):
     did = C.device_id(core)
     if not did:
         raise SystemExit("kc attach: this device is not set up — run kc bootstrap first")
-    dest = C.norm_path(path) if path else (core.parent / "projects" / name).resolve()
+    dest = C.norm_path(path) if path else C.default_module_path(core, name)
     remote = (m or {}).get("remote")
     if not dest.exists():
         if not remote:

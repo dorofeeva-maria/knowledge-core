@@ -86,7 +86,7 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
         raise SystemExit("kc new-module: NAME must be kebab-case and not 'core'")
     if name in C.load_registry(core):
         raise SystemExit(f"kc new-module: '{name}' is already registered")
-    dest = C.norm_path(path) if path else (core.parent / "projects" / name).resolve()
+    dest = C.norm_path(path) if path else C.default_module_path(core, name)
     if dest.exists():
         raise SystemExit(f"kc new-module: {dest} already exists")
     remote, template_url = C.norm_remote(remote), C.norm_remote(template_url)
@@ -114,7 +114,8 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
         (dest / "AGENTS.md").write_text(BARE_AGENTS.format(name=name), encoding="utf-8", newline="\n")
         (dest / "CLAUDE.md").write_text("@AGENTS.md\n", encoding="utf-8", newline="\n")
     G.git(dest, "init", "-q", "-b", G.BRANCH)
-    G.commit_all(dest, f"Start {name}" + (f" from template {template or source}" if source else ""))
+    label = template or str(source).rstrip("/").split("/")[-1].removesuffix(".git")
+    G.commit_all(dest, f"Start {name}" + (f" from template {label}" if source else ""))
     if remote:
         G.git(dest, "remote", "add", "origin", remote)
         status, _ = G.sync_own(dest, f"Start {name}")

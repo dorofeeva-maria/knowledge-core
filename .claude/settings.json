@@ -4,13 +4,22 @@
     "allow": [
       "Bash(python -m kc *)",
       "Bash(python3 -m kc *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(python */tools/notes.py *)",
+      "Bash(python3 */tools/notes.py *)",
+      "PowerShell(python -m kc *)",
+      "PowerShell(git *)",
+      "PowerShell(python */tools/notes.py *)"
     ],
     "deny": [
       "Bash(git reset --hard*)",
       "Bash(git push --force*)",
       "Bash(git push -f*)",
-      "Bash(git clean*)"
+      "Bash(git clean*)",
+      "PowerShell(git reset --hard*)",
+      "PowerShell(git push --force*)",
+      "PowerShell(git push -f*)",
+      "PowerShell(git clean*)"
     ]
   }
 }

@@ -154,6 +154,14 @@ def norm_remote(url):
     return norm_path(u).as_posix()
 
 
+def default_module_path(core, name):
+    """Where a new module goes when no path is given: next to the modules already on this device
+    (their common parent), else <core>/../projects/NAME."""
+    parents = {m["path"].parent for m in modules(core) if m["path"]}
+    base = parents.pop() if len(parents) == 1 else core.parent / "projects"
+    return (base / name).resolve()
+
+
 def set_path(core, name, dest):
     """Record where module `name` lives on this device (gitignored overlay)."""
     did = device_id(core)

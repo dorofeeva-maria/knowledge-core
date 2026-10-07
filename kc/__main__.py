@@ -45,7 +45,7 @@ def _parser():
     g.add_argument("--template", help="a template from `kc templates`")
     g.add_argument("--template-url", help="any template repo: git URL or local path")
     g.add_argument("--no-template", action="store_true", help="a bare module (AGENTS.md + CLAUDE.md)")
-    n.add_argument("--path", help="where to create it (default: <core>/../projects/NAME)")
+    n.add_argument("--path", help="where to create it (default: next to the modules on this device)")
     n.add_argument("--remote", help="an EMPTY repo to push to; without it the module stays on this device")
     n.add_argument("--private", action="store_true",
                    help="personal content: the remote must be private")

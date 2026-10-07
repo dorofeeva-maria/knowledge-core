@@ -32,8 +32,11 @@
        --remote https://github.com/<you>/my-notes.git --description "What goes here"
    ```
 
-   Register a repo you already have: `python3 -m kc add-module NAME PATH` (`--external` for a
-   repo that is not yours — read only).
+   Without `--path` a module goes next to the modules already on this device (the first one:
+   `<core>/../projects/NAME`). Register a repo you already have:
+   `python3 -m kc add-module NAME PATH` (`--external` for a repo that is not yours — read only).
+   A module created from a template URL not in the catalog gets its format check with
+   `--check "python tools/notes.py check"`.
 
 ## Add another device
 

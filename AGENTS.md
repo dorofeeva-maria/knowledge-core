@@ -66,7 +66,11 @@ There is no "close" step: whatever is not written during the session is lost.
 - **Commit with meaning.** After writing into a module, commit there with a message about that
   module, in the module's language — as two separate commands, `git -C <module> add -A` then
   `git -C <module> commit -m "…"` (single commands are pre-approved; `cd … &&` chains are not).
-  Run a module's check the same way: `python <module>/tools/notes.py check`. The end hook pushes it and
+  Run a module's tools the same way, from anywhere: `python <module>/tools/notes.py index` /
+  `check` — never edit a generated file (`index.md`) by hand. On Windows use the Bash tool for
+  git, kc and module tools (the allow-list covers them there).
+- **A module still showing template placeholders** (`setup:` signal, or `> Replace …` in its
+  `AGENTS.md`): before the first write into it, ask what it is for and rewrite them. The end hook pushes it and
   commits anything you left (as `auto: sync`). Run `kc sync` yourself when the human switches
   devices or asks.
 - Never write into a `frozen` or `external` module, and never commit one.
@@ -79,6 +83,11 @@ There is no "close" step: whatever is not written during the session is lost.
 A process is a module's skill, `.claude/skills/<name>/SKILL.md`; `kc registry` lists them.
 When the human asks for something a process covers ("let's study"), read that SKILL.md and
 follow it, working inside that module. The same skill works when the module is opened alone.
+
+Creating or editing a process writes into the module's `.claude/` folder, which Claude Code
+protects: the human must approve that write when Claude Code asks. Say so before you write, so
+the prompt is expected. If the write cannot be approved (e.g. a non-interactive session), give
+the file's full text and its path for the human to save.
 
 ## Maintenance you start yourself
 
