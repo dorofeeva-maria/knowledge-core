@@ -117,6 +117,7 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
     C.save_registry(core, reg)
     commit_registry(core, f"registry: add module {name}")
     C.set_path(core, name, dest)
+    C.grant_module_dirs(core)
     print(f"created '{name}' at {dest}" + (f" (copy of {source})" if source else " (bare)"))
     if not description:
         print("  next: replace the template's placeholders, then "
@@ -149,6 +150,7 @@ def add_module(core, name, path, external=False, private=False, description=None
     C.save_registry(core, reg)
     commit_registry(core, f"registry: add {'external ' if external else ''}module {name}")
     C.set_path(core, name, dest)
+    C.grant_module_dirs(core)
     print(f"registered '{name}' ({'external' if external else 'own'}) -> {dest}")
     if not external and G.branch(dest) != G.BRANCH:
         print(f"  note: kc syncs own modules on '{G.BRANCH}' only; this repo is on '{G.branch(dest)}'")

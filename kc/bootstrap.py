@@ -6,7 +6,6 @@
 3. The privacy check: the core and every private module must have a private remote (ADR 0015).
 4. Claude Code hooks for this device (`.claude/settings.local.json`): sync at session start and end.
 """
-import json
 import platform
 import shutil
 import subprocess
@@ -79,23 +78,14 @@ def ensure_state(core):
 def install_hooks(core):
     """Write this device's hooks into `.claude/settings.local.json` (gitignored), with the
     absolute path of this Python, so hooks work the same in any shell. Other keys are kept."""
-    f = core / ".claude" / "settings.local.json"
-    data = {}
-    if f.exists():
-        try:
-            data = json.loads(f.read_text(encoding="utf-8") or "{}")
-        except json.JSONDecodeError as e:
-            raise SystemExit(f"kc bootstrap: {f} is not valid JSON ({e}) — fix it, then re-run; "
-                             f"nothing was overwritten")
+    data = C.read_local_settings(core)
     py = Path(sys.executable).as_posix()
     run = lambda ev: f'cd "$CLAUDE_PROJECT_DIR" && "{py}" -m kc hook {ev}'
     hooks = data.setdefault("hooks", {})
     hooks["SessionStart"] = [{"matcher": "startup|resume|clear",
                               "hooks": [{"type": "command", "command": run("start"), "timeout": 120}]}]
     hooks["SessionEnd"] = [{"hooks": [{"type": "command", "command": run("end"), "timeout": 60}]}]
-    f.parent.mkdir(parents=True, exist_ok=True)
-    f.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
-    return f
+    return C.write_local_settings(core, data)
 
 
 def _gh_status():
@@ -165,8 +155,9 @@ def run(core, device_id=None, language=None, yes=False):
         paths[name] = str(dest)
     C.write_yaml(C.devices_path(core), devices)
 
-    # 5. hooks
+    # 5. hooks + access to module folders
     hooks = install_hooks(core)
+    C.grant_module_dirs(core)
 
     print("\nbootstrap complete:")
     print(f"  core      {core}")

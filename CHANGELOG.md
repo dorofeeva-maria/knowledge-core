@@ -26,6 +26,11 @@ decisions behind changes are in `docs/adr/`.
 - `CLAUDE.md` (`@AGENTS.md`) and `.claude/settings.json` (auto memory off) are committed.
 - Paths typed as Git Bash paths (`/c/Users/...`) are normalized on Windows.
 
+### Added
+- kc grants Claude Code in the core access to every module on this device:
+  `permissions.additionalDirectories` in `.claude/settings.local.json`, kept current by
+  `bootstrap`, `new-module`, `add-module` and every `sync` (entries kc did not add are kept).
+
 ### Removed
 - Transcript capture (`drafts/`, `kc draft`, Stop/PreCompact hooks, secret masking), `close`,
   `inbox/`, `emergence`, `todo` and `update` skills, `kc pull-all|commit-push|push-all|update|

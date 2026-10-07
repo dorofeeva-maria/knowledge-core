@@ -36,6 +36,7 @@ def _print(title, rows):
 
 def sync_all(core, message=None):
     message = message or f"auto: sync from {C.device_id(core) or 'unknown device'}"
+    C.grant_module_dirs(core)
     rows, failed = [], False
     for name, path, kind in _targets(core):
         if kind == "external":

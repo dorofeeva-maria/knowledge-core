@@ -3,6 +3,7 @@
 The core is a fork of the engine (`kc/` + `ecosystem/`). Its state files are created by
 `kc bootstrap`, never shipped by the engine (ADR 0009).
 """
+import json
 import os
 import re
 from pathlib import Path
@@ -130,3 +131,49 @@ def modules(core):
             "reviewed": m.get("reviewed") or {},
         })
     return out
+
+
+# ---------------------------------------------------------------- Claude Code, this device
+def local_settings_path(core):
+    return core / ".claude" / "settings.local.json"
+
+
+def read_local_settings(core):
+    f = local_settings_path(core)
+    if not f.exists():
+        return {}
+    try:
+        return json.loads(f.read_text(encoding="utf-8") or "{}")
+    except json.JSONDecodeError as e:
+        raise SystemExit(f"kc: {f} is not valid JSON ({e}) — fix it, then re-run; nothing was overwritten")
+
+
+def write_local_settings(core, data):
+    f = local_settings_path(core)
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    return f
+
+
+def grant_module_dirs(core):
+    """Let Claude Code in the core read and write every module present on this device: their
+    paths go into `permissions.additionalDirectories` of `.claude/settings.local.json`. Entries
+    kc did not add are kept (what kc added is remembered in the device overlay)."""
+    did = device_id(core)
+    if not did:
+        return
+    devices = read_yaml(devices_path(core))
+    me = devices.setdefault(did, {})
+    owned = set(me.get("granted_dirs") or [])
+    paths = sorted(Path(m["path"]).as_posix() for m in modules(core) if m["path"])
+    data = read_local_settings(core)
+    perms = data.setdefault("permissions", {})
+    current = perms.get("additionalDirectories") or []
+    kept = [d for d in current if d not in owned]
+    new = kept + [p for p in paths if p not in kept]
+    if new != current:
+        perms["additionalDirectories"] = new
+        write_local_settings(core, data)
+    if paths != sorted(owned):
+        me["granted_dirs"] = paths
+        write_yaml(devices_path(core), devices)
