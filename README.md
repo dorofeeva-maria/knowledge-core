@@ -5,10 +5,12 @@ bases and processes, each its own git repo — coordinated by one orchestrator, 
 worked through conversation with [Claude Code](https://claude.com/claude-code).
 
 - You talk; the agent writes what was decided into the right module, as you go.
-- Every repo syncs by itself at the start and end of each session, on every device.
+- Every repo syncs by itself at the start and end of each session started in the core, on every
+  device.
 - The system notices maintenance — a module that grew, a procedure done by hand three times, a
   format problem — and raises it, so you don't have to remember.
-- Each module works on its own: open it alone and its rules and processes are there.
+- Each module works on its own: open it alone and its rules and processes are there (sync is then
+  yours: pull before, push after — the hooks live in the core).
 
 This repository is the **engine**: copy it once into a private repo — your core — and grow
 your ecosystem from there. It holds no personal data.

@@ -18,8 +18,13 @@ Who does what (ADR 0015):
 1. Read `ecosystem/memory.md`: facts about the human that hold everywhere.
 2. Read the start report (`kc sync:` and `kc signals:`). Then, in one short message, before the
    human's request takes over:
-   - `CONFLICT …` / `NOT PUSHED …` / `fetch failed` — say which repo and offer to fix it now.
-     Do not write to a repo with an unresolved conflict.
+   - Every `FAIL:` line (a conflict, not pushed, fetch failed, wrong branch, unreadable registry…)
+     — say which repo and what it means, and offer to fix it now. Do not write to a repo with an
+     unresolved conflict. To resolve a conflict: `git -C <repo> pull --rebase origin main`, edit
+     each conflicted file keeping both sides' content where both matter (ask the human when they
+     contradict), `git add` it, `git -C <repo> rebase --continue`, then `kc sync`. **Never**
+     `git reset --hard`, `git push --force`, `git clean` or delete commits: kc keeps local commits
+     safe, and these would lose them.
    - `format:` — fix mechanical problems yourself right away (run the module's check with `-v`,
      fix, commit); show content problems to the human.
    - `structure:` — the module grew: look at it and propose what to do (split, new module, a
@@ -37,18 +42,23 @@ There is no "close" step: whatever is not written during the session is lost.
 - The moment something is decided, learned or changed in the conversation — a fact, a decision,
   a plan update, a preference — write it into the module it belongs to. Do not wait to be asked.
 - Pick the module by its registry description. If nothing fits, say so and propose a new module
-  or a place; do not invent one silently.
+  (record it under `## Candidates` in `ecosystem/todo.md` if the human defers); do not invent one
+  silently, and do not park subject knowledge in the core. Core files (`todo.md`,
+  `decisions.md`, `memory.md`) hold short pointers, never the content itself — least of all
+  confidential work material.
 - Follow the module's `AGENTS.md` (format, language, folders, links). Prefer updating an
   existing note over creating a near-duplicate.
 - **Reconcile while writing.** If the new information contradicts what the module already says,
   show both versions (with dates) and ask the human which holds. Keep the old value with its
   period ("until 2026-10: …") when history matters.
 - **Files.** A file to keep reaches you as a path (the human drags it into the terminal). Copy it
-  into the module's media folder (per its `AGENTS.md`) and link it from the note. A pasted image
-  is not saved as a file — ask for the path if it should be kept. Large or device-only files go
-  into the module's own `.gitignore`.
+  into the module's media folder (per its `AGENTS.md`; `media/` if it names none) and link it
+  from the note. If the file's folder is outside what you may access, ask the human to allow it
+  (in Claude Code: `/add-dir <folder>`) or to copy the file in. A pasted image is not saved as a
+  file — ask for the path if it should be kept. Large or device-only files go into the module's
+  own `.gitignore`.
 - **Commit with meaning.** After writing into a module, commit there with a message about that
-  module: `git -C <module> add -A && git -C <module> commit -m "…"`. The end hook pushes it and
+  module, in the module's language: `git -C <module> add -A && git -C <module> commit -m "…"`. The end hook pushes it and
   commits anything you left (as `auto: sync`). Run `kc sync` yourself when the human switches
   devices or asks.
 - Never write into a `frozen` or `external` module, and never commit one.
@@ -85,9 +95,16 @@ The human will not run maintenance on request; noticing it is your job.
 
 ## Memory
 
-When the human states a lasting fact about themselves or corrects how you work, write it to
-`ecosystem/memory.md` (one bullet: the fact, then **Why:**). A rule that belongs to one module
-goes into that module's `AGENTS.md`. Your assistant's built-in memory is off in the core.
+`ecosystem/memory.md` holds only what is true across all modules: lasting facts about the human
+and how to work with them (one bullet: the fact, then **Why:**). Subject facts — a medication
+dose, a score, a plan — belong in a module, even if that module does not exist yet (then a
+candidate). A rule for one module goes into that module's `AGENTS.md`. Each rule lives in one
+place: never write the same rule into both.
+
+**A new statement that contradicts a memory bullet is confirmed first**: show the recorded
+version (with its **Why:**) and the new one, and change the bullet only after the human
+confirms — especially when the bullet says it was corrected before. Your assistant's built-in
+memory is off in the core.
 
 ## Ground rules
 

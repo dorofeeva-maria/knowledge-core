@@ -35,7 +35,7 @@ why it is this way.
 | 0001 decision records and doc layers | accepted, partly superseded by 0015 (no skills/adapters layers) |
 | 0002 the orchestrator is called core | accepted |
 | 0003 single branch, rebase onto upstream | superseded by 0015 |
-| 0004 large tasks: estimate and choose | accepted |
+| 0004 large tasks: estimate and choose | accepted, partly superseded by 0015 |
 | 0005 core state: registry, todo, decisions | superseded by 0015 |
 | 0006 transcript drafts, push on commit | superseded by 0015 |
 | 0007 module settings and media | superseded by 0015 |

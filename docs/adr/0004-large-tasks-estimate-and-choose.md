@@ -6,7 +6,7 @@ updated: 2026-10-06
 
 # 0004. Large tasks: estimate, then background / now / defer
 
-Status: accepted · 2026-10-06
+Status: accepted, partly superseded by 0015 (no inbox, engine/template adaptation or assistant-agnostic parts) · 2026-10-06
 
 ## Context
 

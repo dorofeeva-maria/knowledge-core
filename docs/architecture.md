@@ -68,7 +68,8 @@ become a process — is the agent's, during the session (`AGENTS.md`).
 
 ## Modules
 
-- **Independent.** A module works opened alone: `CLAUDE.md` → `AGENTS.md` describe it, its
+- **Independent.** A module works opened alone (then nothing syncs it automatically — the hooks
+  run only in sessions started in the core): `CLAUDE.md` → `AGENTS.md` describe it, its
   skills load natively. It never mentions the core or other modules.
 - **No links between modules.** Notes in different modules relate through shared tags in their
   frontmatter; the agent finds them by grep. Knowledge moves between modules by being rewritten,
@@ -81,9 +82,12 @@ become a process — is the agent's, during the session (`AGENTS.md`).
 ## Privacy
 
 A module flagged `private` holds personal content. Its remote must be a private repo — checked
-once, when it gets a remote (`new-module`, `add-module`, `set remote=`) and at `bootstrap`. The
-core is always private: `bootstrap` refuses a public core origin. The agent never carries
-details of private content into other modules or anything public.
+once, when it gets a remote (`new-module`, `add-module`, `set remote=`) and at `bootstrap`: a
+public GitHub repo is refused; a remote kc cannot verify (not on GitHub, or no `gh`) gives a
+warning. The core is always private. Two cheap guards run on every sync, without network:
+a repo whose `origin` differs from the registry's `remote` is not synced (so a remote changed
+with plain git is noticed), and a non-private module never pushes a note tagged `private`.
+The agent never carries details of private content into other modules or anything public.
 
 ## Non-goals
 

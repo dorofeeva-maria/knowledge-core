@@ -17,7 +17,8 @@ from pathlib import Path
 
 BRANCH = "main"
 NET_TIMEOUT = 60          # seconds for network git ops, so a hook never hangs
-_ENV = {**os.environ, "GIT_EDITOR": "true", "GIT_TERMINAL_PROMPT": "0"}
+_ENV = {**os.environ, "GIT_EDITOR": "true", "GIT_TERMINAL_PROMPT": "0", "GCM_INTERACTIVE": "never",
+        "GIT_SSH_COMMAND": os.environ.get("GIT_SSH_COMMAND", "ssh -o BatchMode=yes")}
 
 
 def git(path, *args, timeout=None):
@@ -91,67 +92,145 @@ def _classify_push(stderr):
     s = (stderr or "").lower()
     if "protected branch" in s or "gh006" in s:
         return "rejected by branch protection"
-    if "large files" in s or "exceeds github's file size limit" in s or "gh001" in s:
-        return "a file is too large for the host — move it out or add it to the repo's .gitignore"
+    if "gh013" in s or "secret" in s:
+        return ("rejected: the host found a secret in the commits — remove it from the unpushed "
+                "commit (`git reset --soft origin/main`, fix, commit again)")
+    if "large files" in s or ("exceeds" in s and "size" in s) or "gh001" in s:
+        return ("rejected: a file is too large for the host — remove it from the unpushed commit "
+                "(`git reset --soft origin/main`, `git rm --cached <file>`, add it to .gitignore, commit)")
+    if "pre-receive" in s or "declined" in s:
+        return f"rejected by the host: {first(stderr)}"
     if "permission" in s or "denied" in s or "authentication failed" in s or "403" in s:
         return "permission denied — check your access (`gh auth status`)"
     if "could not resolve" in s or "timed out" in s or "unable to access" in s:
         return "network error — will retry on the next sync"
-    if "fetch first" in s or "non-fast-forward" in s or "rejected" in s:
+    if "fetch first" in s or "non-fast-forward" in s:
         return "origin moved meanwhile — will retry on the next sync"
-    return last(stderr) or "push failed"
+    return first(stderr) or "push failed"
+
+
+LARGE = 50 * 2**20       # files above this are never committed by kc (hosts reject ~100 MB)
 
 
 def commit_all(path, message):
-    """Stage everything and commit. Returns None if nothing to commit, else (ok, detail)."""
+    """Stage everything except files over LARGE and commit. Returns (result, left_out):
+    result None = nothing to commit, else (ok, detail)."""
     git(path, "add", "-A")
+    big = []
+    for f in git(path, "diff", "--cached", "--name-only", "--diff-filter=AM", "-z").stdout.split("\0"):
+        fp = Path(path) / f
+        if f and fp.is_file() and fp.stat().st_size > LARGE:
+            git(path, "reset", "-q", "--", f)
+            big.append(f)
     if git(path, "diff", "--cached", "--quiet").returncode == 0:
-        return None
+        return None, big
     r = git(path, "commit", "-q", "-m", message)
-    return (r.returncode == 0, last(r.stderr) or last(r.stdout))
+    return (r.returncode == 0, first(r.stderr) or last(r.stdout)), big
 
 
-def sync_own(path, message, frozen=False):
-    """Sync one of your repos. Returns (status line, failed?)."""
+def current_branch(path):
+    """The checked-out branch, or None on a detached HEAD."""
+    r = git(path, "symbolic-ref", "--quiet", "--short", "HEAD")
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def same_url(a, b):
+    def norm(u):
+        u = str(u or "").strip()
+        if u and _is_local_remote(u) and "://" not in u:
+            try:
+                u = str(Path(u).resolve())     # short/long Windows names, relative paths
+            except OSError:
+                pass
+        u = u.replace("\\", "/").rstrip("/")
+        return (u[:-4] if u.endswith(".git") else u).lower()
+    return norm(a) == norm(b)
+
+
+PRIVATE_TAG = re.compile(r"^tags:.*\bprivate\b", re.M)
+
+
+def _private_notes(path, since):
+    """Markdown files touched by the commits about to be pushed (all files on a first push)
+    whose frontmatter tags them `private`."""
+    if since:
+        files = git(path, "log", "--name-only", "--format=", f"{since}..HEAD").stdout.splitlines()
+    else:
+        files = git(path, "ls-files").stdout.splitlines()
+    out = []
+    for f in sorted({f for f in files if f.endswith(".md")}):
+        fp = Path(path) / f
+        if fp.is_file():
+            head = fp.read_text(encoding="utf-8", errors="replace")[:3000]
+            if head.startswith("---") and PRIVATE_TAG.search(head.split("\n---", 1)[0]):
+                out.append(f)
+    return out
+
+
+def sync_own(path, message, frozen=False, remote=None, private=True, budget=None):
+    """Sync one of your repos. `remote`: the registry's URL (origin must match it); `private`:
+    the module's flag; `budget`: a function giving the seconds left for network work.
+    Returns (status line, failed?)."""
     if not is_repo(path):
         return "absent", False
     if conflicted(path):
         return f"CONFLICT unresolved — finish it: git -C \"{path}\" status", True
+    b = current_branch(path)
+    if b != BRANCH:
+        where = f"branch '{b}'" if b else "a detached HEAD"
+        return f"skipped: on {where}, expected '{BRANCH}' — nothing committed", True
     notes = []
     if dirty(path):
         if frozen:
             return "frozen but has local changes — not committed; revert or unfreeze", True
-        res = commit_all(path, message)
+        res, big = commit_all(path, message)
+        if big:
+            notes.append(f"left out (over {LARGE // 2**20} MB): {', '.join(big)} — add to .gitignore")
         if res and not res[0]:
-            return f"commit failed: {res[1]}", True
+            return ", ".join(notes + [f"commit failed: {res[1]}"]), True
         if res:
             notes.append("committed leftovers")
     if not has_origin(path):
         return ", ".join(notes + ["no remote — stays on this device"]), False
-    b = branch(path)
-    if b != BRANCH:
-        return f"skipped (on branch '{b}', expected '{BRANCH}')", True
-    fr = git(path, "fetch", "--quiet", "origin", timeout=NET_TIMEOUT)
+    if remote and not same_url(origin_url(path), remote):
+        return ", ".join(notes + [f"NOT SYNCED: origin is {origin_url(path)} but the registry says "
+                                  f"{remote} — change it with `kc set NAME remote=…`"]), True
+    if budget is not None and budget() < 5:
+        return ", ".join(notes + ["not synced: out of time — run `kc sync`"]), True
+    t = NET_TIMEOUT if budget is None else max(5, min(NET_TIMEOUT, int(budget())))
+    fr = git(path, "fetch", "--quiet", "origin", timeout=t)
     if fr.returncode != 0:
         return ", ".join(notes + [f"fetch failed ({first(fr.stderr) or 'offline?'}) — local commits kept"]), True
+    has_main = has_ref(path, f"refs/remotes/origin/{BRANCH}")
+    if not has_main and git(path, "branch", "-r").stdout.strip():
+        return ", ".join(notes + [f"NOT SYNCED: origin has branches but no '{BRANCH}' — check the remote"]), True
     ahead, behind = ahead_behind(path)
     if behind:
         if frozen or not ahead:
             r = git(path, "merge", "--ff-only", "--quiet", f"origin/{BRANCH}")
             if r.returncode != 0:
-                return f"fast-forward failed: {last(r.stderr)}", True
+                return ", ".join(notes + [f"fast-forward failed: {first(r.stderr)}"]), True
             notes.append(f"pulled {behind}")
         else:
             r = git(path, "rebase", "--quiet", f"origin/{BRANCH}")
             if r.returncode != 0:
                 files = git(path, "diff", "--name-only", "--diff-filter=U").stdout.split()
                 git(path, "rebase", "--abort")
-                return (f"CONFLICT with origin ({', '.join(files[:3]) or last(r.stderr)}) — not pushed; "
-                        f"resolve: git -C \"{path}\" pull --rebase origin {BRANCH}"), True
+                what = (f"CONFLICT with origin ({', '.join(files[:3])})" if files
+                        else f"rebase onto origin failed ({first(r.stderr)})")
+                return ", ".join(notes + [f"{what} — not pushed, local commits kept; resolve: "
+                                          f"git -C \"{path}\" pull --rebase origin {BRANCH}"]), True
             notes.append(f"pulled {behind}")
-    ahead, _ = ahead_behind(path) if has_ref(path, f"refs/remotes/origin/{BRANCH}") else (1, 0)
+    ahead = ahead_behind(path)[0] if has_main else 1
     if ahead and not frozen:
-        r = git(path, "push", "--quiet", "-u", "origin", BRANCH, timeout=NET_TIMEOUT)
+        if not private:
+            leaked = _private_notes(path, f"origin/{BRANCH}" if has_main else None)
+            if leaked:
+                return ", ".join(notes + [f"NOT PUSHED: private-tagged notes in a non-private module "
+                                          f"({', '.join(leaked[:3])}) — move them to a private module "
+                                          f"or mark this one private (`kc set NAME private=true`)"]), True
+        t = NET_TIMEOUT if budget is None else max(5, min(NET_TIMEOUT, int(budget())))
+        r = git(path, "push", "--quiet", "-u", "origin", BRANCH, timeout=t)
         if r.returncode != 0:
             return ", ".join(notes + [f"NOT PUSHED: {_classify_push(r.stderr)}"]), True
         notes.append(f"pushed {ahead}")
@@ -174,11 +253,15 @@ def sync_external(path):
 
 # ---------------------------------------------------------------- privacy (ADR 0015)
 def _is_local_remote(url):
+    """A local path or file:// URL. Anything else — https://, ssh://, git@host:path, or an SSH
+    host alias like `github-personal:me/x.git` — is a remote host."""
     if "://" in url:
-        return url.split("://", 1)[0] == "file"
-    if re.match(r"^[^/\\]+@[^/:]+:", url):   # scp-like git@host:path
+        return url.split("://", 1)[0].lower() == "file"
+    if re.match(r"^[A-Za-z]:[\\/]", url) or url.startswith(("/", "./", "../", "~")):
+        return True
+    if re.match(r"^[^/\\:]+:", url):        # host:path, with or without user@
         return False
-    return True
+    return Path(url).exists()
 
 
 def visibility(url):
@@ -187,7 +270,7 @@ def visibility(url):
         return "local"
     if _is_local_remote(url):
         return "local"
-    m = re.search(r"github\.com[:/]+([^/]+)/([^/]+?)(?:\.git)?/?$", url)
+    m = re.search(r"github\.com(?::\d+)?[:/]+([^/]+)/([^/]+?)(?:\.git)?/?$", url, re.I)
     if not m:
         return "non-github"
     if not shutil.which("gh"):

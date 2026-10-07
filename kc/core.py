@@ -43,10 +43,26 @@ def read_yaml(path):
     if re.search(r"^(<<<<<<<|>>>>>>>)", text, re.M):
         raise SystemExit(f"kc: {path} has unresolved conflict markers — edit it (keep both sides' "
                          f"entries), then `git add` it and finish with `git rebase --continue`")
+    y = yaml()
+
+    class Strict(y.SafeLoader):        # a duplicated key is an error, not "last one wins"
+        pass
+
+    def mapping(loader, node, deep=False):
+        keys = [loader.construct_object(k, deep=deep) for k, _ in node.value]
+        dup = {k for k in keys if keys.count(k) > 1}
+        if dup:
+            raise y.constructor.ConstructorError(None, None, f"duplicate key(s) {sorted(dup)}", node.start_mark)
+        return y.SafeLoader.construct_mapping(loader, node, deep)
+
+    Strict.add_constructor(y.resolver.BaseResolver.DEFAULT_MAPPING_TAG, mapping)
     try:
-        return yaml().safe_load(text) or {}
+        data = y.load(text, Loader=Strict) or {}
     except Exception as e:
-        raise SystemExit(f"kc: {path} is not valid YAML — fix it by hand ({str(e).splitlines()[0]})")
+        raise SystemExit(f"kc: {path} is not valid YAML — fix it by hand ({' '.join(str(e).split())[:160]})")
+    if not isinstance(data, dict):
+        raise SystemExit(f"kc: {path} must be a mapping (key: value), got {type(data).__name__}")
+    return data
 
 
 def write_yaml(path, data):
@@ -77,7 +93,27 @@ def registry_path(core):
 
 
 def load_registry(core):
-    return read_yaml(registry_path(core)).get("modules") or {}
+    mods = read_yaml(registry_path(core)).get("modules") or {}
+    if not isinstance(mods, dict):
+        raise SystemExit(f"kc: {registry_path(core)}: `modules:` must be a mapping of name → fields")
+    return mods
+
+
+def _entry_problem(m):
+    if not isinstance(m, dict):
+        return "the entry must be a mapping of fields"
+    for k in ("external", "private"):
+        if k in m and m[k] is not None and not isinstance(m[k], bool):
+            return f"`{k}` must be true or false, got {m[k]!r}"
+    if m.get("status") not in (None, *STATUSES):
+        return f"`status` must be one of {', '.join(STATUSES)}, got {m.get('status')!r}"
+    return None
+
+
+def registry_problems(core):
+    """Registry entries kc skips because a field is invalid — reported, never guessed."""
+    return [f"module '{n}' skipped: {p}" for n, m in load_registry(core).items()
+            if (p := _entry_problem(m or {}))]
 
 
 def save_registry(core, modules):
@@ -113,8 +149,8 @@ def norm_remote(url):
     if not url:
         return url
     u = str(url).strip()
-    if "://" in u or re.match(r"^[^/\\]+@[^/:]+:", u):
-        return u
+    if "://" in u or (re.match(r"^[^/\\:]+:", u) and not re.match(r"^[A-Za-z]:[\\/]", u)):
+        return u                                  # a URL, user@host:path or host-alias:path
     return norm_path(u).as_posix()
 
 
@@ -138,6 +174,8 @@ def modules(core):
     out = []
     for name, m in reg.items():
         m = m or {}
+        if _entry_problem(m):          # invalid flags: skipped and reported (registry_problems)
+            continue
         p = paths.get(name)
         out.append({
             "name": name,

@@ -5,6 +5,12 @@
       "Bash(python -m kc *)",
       "Bash(python3 -m kc *)",
       "Bash(git *)"
+    ],
+    "deny": [
+      "Bash(git reset --hard*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git clean*)"
     ]
   }
 }

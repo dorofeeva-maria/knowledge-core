@@ -36,9 +36,11 @@ What each value makes the core do:
 - **`status: frozen`** — yours, but the subject is closed: read and pull only; no writes, no
   commits, no maintenance signals. Set it back to `active` to work on it again.
 - **`external: true`** — not yours (e.g. a work repo): read only. kc fast-forwards it on its
-  current branch when clean, never commits, pushes or checks it. It cannot become `active`.
+  current branch when clean, never commits, pushes or checks it. `status` does not apply to it.
 - **`private: true`** — the remote must be a private repo: checked once, when the module gets
   its remote (`new-module`, `add-module`, `set remote=`) and at `bootstrap` (ADR 0015).
+  `private: false` — sync refuses to push notes tagged `private` from this module.
+- **`remote`** — every sync checks that the repo's `origin` is this URL; a mismatch is a FAIL.
 - **`check`** — run at every session start; a non-zero exit becomes a `format:` signal.
 - **`reviewed`** — the start signal `structure:` fires when the module grew by
   `review_after_notes` notes, or grew at all and `review_after_days` passed since this date.
@@ -52,6 +54,7 @@ A module's processes are not listed here: they are the module's own Claude Code 
 <device-id>:            # KC_DEVICE_ID from .env
   paths:
     <module>: /absolute/path/on/this/device
+  granted_dirs: [...]   # written by kc: module folders it added to Claude's additionalDirectories
 ```
 
 A module missing from `paths` is not on this device; kc skips it.
