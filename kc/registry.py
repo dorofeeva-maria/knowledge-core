@@ -106,11 +106,15 @@ def set_fields(core, name, pairs):
         if k not in SETTABLE:
             raise SystemExit(f"kc set: '{k}' cannot be set (settable: {', '.join(sorted(SETTABLE))})")
         changes[k] = _parse(k, v)
+        if k == "remote" and changes[k]:
+            changes[k] = C.norm_remote(changes[k])
+            r = G.git(".", "ls-remote", changes[k], timeout=G.NET_TIMEOUT)
+            if r.returncode != 0:
+                raise SystemExit(f"kc set: not changed — {changes[k]} is not a reachable git repo "
+                                 f"({G.first(r.stderr)}). In Git Bash quote `'remote=~'` to clear it.")
     new = {**entry, **changes}
     if new.get("private") and ("remote" in changes or "private" in changes) and new.get("remote"):
-        problem = G.private_problem(new["remote"])
-        if problem:
-            raise SystemExit(f"kc set: not changed — module '{name}' is private but {problem}")
+        G.enforce_private(new["remote"], "kc set")
     reg[name] = {k: v for k, v in new.items() if v is not None or k in ("remote",)}
     C.save_registry(core, reg)
     summary = ", ".join(f"{k}={v}" for k, v in changes.items())

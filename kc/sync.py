@@ -36,8 +36,11 @@ def _print(title, rows):
 
 def sync_all(core, message=None):
     message = message or f"auto: sync from {C.device_id(core) or 'unknown device'}"
-    C.grant_module_dirs(core)
     rows, failed = [], False
+    try:
+        C.grant_module_dirs(core)
+    except SystemExit as e:          # a broken settings file must not stop the sync
+        rows.append(("claude", str(e)))
     for name, path, kind in _targets(core):
         if kind == "external":
             status, bad = G.sync_external(path)
@@ -157,15 +160,25 @@ def cmd_status(core):
 def hook(core, event):
     """Assistant hooks. Output of `start` goes into the session's context; `end` runs quietly.
     Always exit 0: a hook failure must not block the session — problems are in the report."""
-    if event == "start":
-        rows, _ = sync_all(core)
-        _print("kc sync:", rows)
-        sig = signals(core)
-        _print("kc signals (raise these with the human — see AGENTS.md):", sig)
-        if not sig:
-            print("kc signals: none")
-    elif event == "end":
-        sync_all(core)
+    try:
+        if event == "start":
+            rows, _ = sync_all(core)
+            _print("kc sync:", rows)
+            missing = [m["name"] for m in C.modules(core) if not m["path"]]
+            if missing:
+                print("kc: in the registry but not set up on this device: " + ", ".join(missing)
+                      + " (set up: python -m kc bootstrap)")
+            sig = signals(core)
+            _print("kc signals (raise these with the human — see AGENTS.md):", sig)
+            if not sig:
+                print("kc signals: none")
+            return 0
+        if event == "end":
+            sync_all(core)
+            return 0
+    except SystemExit as e:
+        print(f"kc hook {event}: {e} — nothing else was synced; fix this first")
+        return 0
     else:
         print(f"kc hook: unknown event '{event}' (start | end)")
     return 0

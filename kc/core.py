@@ -37,7 +37,16 @@ def yaml():
 
 def read_yaml(path):
     path = Path(path)
-    return (yaml().safe_load(path.read_text(encoding="utf-8")) or {}) if path.exists() else {}
+    if not path.exists():
+        return {}
+    text = path.read_text(encoding="utf-8")
+    if re.search(r"^(<<<<<<<|>>>>>>>)", text, re.M):
+        raise SystemExit(f"kc: {path} has unresolved conflict markers — edit it (keep both sides' "
+                         f"entries), then `git add` it and finish with `git rebase --continue`")
+    try:
+        return yaml().safe_load(text) or {}
+    except Exception as e:
+        raise SystemExit(f"kc: {path} is not valid YAML — fix it by hand ({str(e).splitlines()[0]})")
 
 
 def write_yaml(path, data):
@@ -96,6 +105,17 @@ def norm_path(p):
         if m:
             p = f"{m.group(1).upper()}:{m.group(2) or '/'}"
     return Path(p).expanduser().resolve()
+
+
+def norm_remote(url):
+    """A remote or template URL typed by the human: URLs and scp-style addresses stay as they
+    are; a local path becomes absolute (Git Bash `/c/...` → `C:/...` on Windows)."""
+    if not url:
+        return url
+    u = str(url).strip()
+    if "://" in u or re.match(r"^[^/\\]+@[^/:]+:", u):
+        return u
+    return norm_path(u).as_posix()
 
 
 def set_path(core, name, dest):

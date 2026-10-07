@@ -111,29 +111,36 @@ def run(core, device_id=None, language=None, yes=False):
 
     # 2. privacy: the core always holds private content
     url = G.origin_url(core)
-    problem = G.private_problem(url) if url else None
-    if problem:
+    level, problem = G.private_problem(url) if url else (None, None)
+    warnings = []
+    if level == "warn":      # not verifiable: the human makes sure it is private
+        warnings.append(f"the core's origin: {problem}")
+    elif level == "stop":
         raise SystemExit(f"kc bootstrap: STOP — the core's origin: {problem}.\n"
                          f"  The core holds personal content and is pushed automatically. Point it at "
                          f"a private repo:\n  git remote set-url origin <private-url>   (then re-run)")
 
     # 3. device
     if not device_id:
-        device_id = _ask("Device id for this machine", platform.node() or "device", yes)
+        device_id = _ask("Device id for this machine", C.device_id(core) or platform.node() or "device", yes)
     env_path = core / ".env"
     keep = [l for l in (env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else [])
             if l.strip() and not l.strip().startswith("KC_DEVICE_ID=")]
     env_path.write_text("\n".join([f"KC_DEVICE_ID={device_id}"] + keep) + "\n", encoding="utf-8", newline="\n")
 
-    # 4. modules on this device
+    # 4. modules on this device (check the settings file first, so a failure changes nothing)
+    C.read_local_settings(core)
     devices = C.read_yaml(C.devices_path(core))
     paths = devices.setdefault(device_id, {}).setdefault("paths", {})
-    warnings = []
     for name, m in C.load_registry(core).items():
         m = m or {}
         ext = m.get("external") is True
+        here = name in paths            # already set up on this device: keep it by default
         if not _ask_yn(f"Set up module '{name}'{' (external)' if ext else ''} on this device?",
-                       default=not ext, yes=yes):
+                       default=here or not ext, yes=yes):
+            if here and not _ask_yn(f"  '{name}' is set up here ({paths[name]}). Remove it from this "
+                                    f"device's list? Files stay.", default=False, yes=yes):
+                continue
             paths.pop(name, None)
             continue
         default = paths.get(name) or str(core.parent / "projects" / name)
@@ -149,7 +156,7 @@ def run(core, device_id=None, language=None, yes=False):
                 print(f"  clone failed — skipped '{name}'")
                 continue
         if m.get("private") and remote:
-            p = G.private_problem(remote)
+            _, p = G.private_problem(remote)
             if p:
                 warnings.append(f"module '{name}' is private but {p}")
         paths[name] = str(dest)

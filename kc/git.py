@@ -33,6 +33,15 @@ def last(s):
     return lines[-1] if lines else ""
 
 
+def first(s):
+    """The most telling line of git's stderr (the first 'fatal:'/'error:' line, else the first)."""
+    lines = [l.strip() for l in (s or "").strip().splitlines() if l.strip()]
+    for l in lines:
+        if l.startswith(("fatal:", "error:")):
+            return l
+    return lines[0] if lines else ""
+
+
 def is_repo(path):
     return bool(path) and (Path(path) / ".git").exists()
 
@@ -124,7 +133,7 @@ def sync_own(path, message, frozen=False):
         return f"skipped (on branch '{b}', expected '{BRANCH}')", True
     fr = git(path, "fetch", "--quiet", "origin", timeout=NET_TIMEOUT)
     if fr.returncode != 0:
-        return ", ".join(notes + [f"fetch failed ({last(fr.stderr) or 'offline?'}) — local commits kept"]), True
+        return ", ".join(notes + [f"fetch failed ({first(fr.stderr) or 'offline?'}) — local commits kept"]), True
     ahead, behind = ahead_behind(path)
     if behind:
         if frozen or not ahead:
@@ -155,10 +164,12 @@ def sync_external(path):
         return "absent", False
     if conflicted(path) or dirty(path):
         return "skipped (local changes — not ours to commit)", False
+    before = git(path, "rev-parse", "HEAD").stdout.strip()
     r = git(path, "pull", "--ff-only", "--quiet", timeout=NET_TIMEOUT)
     if r.returncode != 0:
-        return f"not updated: {last(r.stderr) or 'pull failed'}", False
-    return "up to date (ff)", False
+        return f"not updated: {first(r.stderr) or 'pull failed'}", False
+    n = git(path, "rev-list", "--count", f"{before}..HEAD").stdout.strip() if before else ""
+    return (f"pulled {n} (ff)" if n and n != "0" else "up to date (ff)"), False
 
 
 # ---------------------------------------------------------------- privacy (ADR 0015)
@@ -188,13 +199,23 @@ def visibility(url):
 
 
 def private_problem(url):
-    """None if `url` is safe for private content, else why not. Checked once — when a private
-    repo gets its remote — not on every push."""
+    """Is `url` safe for private content? Checked once — when a private repo gets its remote —
+    not on every push. Returns (None, None) if verified or local; ("stop", why) if it is a
+    public repo; ("warn", why) if kc cannot verify it (not on GitHub, or gh missing)."""
     v = visibility(url)
     if v in ("local", "private"):
-        return None
+        return None, None
     if v == "public":
-        return f"{url} is a PUBLIC repo — make it private or use another one"
+        return "stop", f"{url} is a PUBLIC repo — make it private or use another one"
     if v == "non-github":
-        return f"{url} is not on GitHub — kc can only verify GitHub repos are private"
-    return f"cannot verify {url} is private — install GitHub CLI and run `gh auth login`"
+        return "warn", f"{url} is not on GitHub, so kc cannot verify it is private — make sure it is"
+    return "warn", f"cannot verify {url} is private (install GitHub CLI, `gh auth login`) — make sure it is"
+
+
+def enforce_private(url, what):
+    """Refuse a public remote for private content; warn when it cannot be verified."""
+    level, why = private_problem(url)
+    if level == "stop":
+        raise SystemExit(f"{what}: not done — the content is private but {why}")
+    if level == "warn":
+        print(f"  WARNING: {why}")

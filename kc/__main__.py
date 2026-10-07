@@ -30,9 +30,10 @@ def _parser():
     sub = p.add_subparsers(dest="cmd", metavar="COMMAND")
 
     b = sub.add_parser("bootstrap", help="set up this device")
-    b.add_argument("--device-id")
-    b.add_argument("--language")
-    b.add_argument("--yes", action="store_true", help="accept defaults, ask nothing")
+    b.add_argument("--device-id", help="this machine's id (default: the one in .env, else the hostname)")
+    b.add_argument("--language", help="default language to write in, e.g. en, ru")
+    b.add_argument("--yes", action="store_true",
+                   help="accept defaults, ask nothing (keeps modules already set up here)")
 
     sub.add_parser("registry", help="the map of modules")
     sub.add_parser("templates", help="the module-template catalog")
@@ -40,23 +41,27 @@ def _parser():
     n = sub.add_parser("new-module", help="create a module")
     n.add_argument("name")
     g = n.add_mutually_exclusive_group(required=True)
-    g.add_argument("--template")
-    g.add_argument("--template-url")
-    g.add_argument("--no-template", action="store_true")
-    n.add_argument("--path")
-    n.add_argument("--remote")
-    n.add_argument("--private", action="store_true")
-    n.add_argument("--description")
+    g.add_argument("--template", help="a template from `kc templates`")
+    g.add_argument("--template-url", help="any template repo: git URL or local path")
+    g.add_argument("--no-template", action="store_true", help="a bare module (AGENTS.md + CLAUDE.md)")
+    n.add_argument("--path", help="where to create it (default: <core>/../projects/NAME)")
+    n.add_argument("--remote", help="an EMPTY repo to push to; without it the module stays on this device")
+    n.add_argument("--private", action="store_true",
+                   help="personal content: the remote must be private")
+    n.add_argument("--description", help="one line: what it holds and what goes there")
+    n.add_argument("--check", help="read-only format check command (default: from the template catalog)")
 
     a = sub.add_parser("add-module", help="register an existing repo")
     a.add_argument("name")
     a.add_argument("path")
     a.add_argument("--external", action="store_true", help="not yours: read only, never committed")
-    a.add_argument("--private", action="store_true")
-    a.add_argument("--description")
-    a.add_argument("--check")
+    a.add_argument("--private", action="store_true", help="personal content: the remote must be private")
+    a.add_argument("--description", help="one line (default: the first line of its README)")
+    a.add_argument("--check", help="read-only format check command, run in the module root")
 
-    s = sub.add_parser("set", help="change registry fields")
+    s = sub.add_parser("set", help="change registry fields",
+                       description="keys: description, remote (an empty or existing repo; '~' clears it — "
+                                   "quote it in a shell), status (active|frozen), private (true|false), check")
     s.add_argument("name")
     s.add_argument("pairs", nargs="+", metavar="key=value")
 
@@ -94,7 +99,7 @@ def main(argv):
     if args.cmd == "new-module":
         from . import modules
         return modules.new_module(core, args.name, args.template, args.template_url, args.no_template,
-                                  args.path, args.remote, args.private, args.description)
+                                  args.path, args.remote, args.private, args.description, args.check)
     if args.cmd == "add-module":
         from . import modules
         return modules.add_module(core, args.name, args.path, args.external, args.private,

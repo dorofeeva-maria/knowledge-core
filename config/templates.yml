@@ -8,3 +8,7 @@ templates:
     source: https://github.com/dorofeeva-maria/template-info.git
     when: A knowledge module — notes and references (entities / concepts / summaries / analyses).
     check: python tools/notes.py check
+  study:
+    source: https://github.com/dorofeeva-maria/template-study.git
+    when: One study subject, learned with the learn mastery framework — plan, subtopic hubs, HTML theory artifacts, strand.
+    check: python tools/notes.py check

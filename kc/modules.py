@@ -69,8 +69,19 @@ def _copy_template(source, dest):
         shutil.copytree(tmp, dest, ignore=shutil.ignore_patterns(".git"))
 
 
+def check_remote(remote, what="kc new-module"):
+    """A new module's remote must exist and be empty (a remote with commits — e.g. a GitHub repo
+    created with a README — would conflict with the module's first push)."""
+    r = G.git(".", "ls-remote", remote, timeout=G.NET_TIMEOUT)
+    if r.returncode != 0:
+        raise SystemExit(f"{what}: cannot reach the remote {remote}: {G.first(r.stderr)}")
+    if r.stdout.strip():
+        raise SystemExit(f"{what}: the remote {remote} is not empty — create an empty repo "
+                         f"(no README, no license) and use that")
+
+
 def new_module(core, name, template=None, template_url=None, no_template=False, path=None,
-               remote=None, private=False, description=None):
+               remote=None, private=False, description=None, check=None):
     if not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", name) or name == "core":
         raise SystemExit("kc new-module: NAME must be kebab-case and not 'core'")
     if name in C.load_registry(core):
@@ -78,19 +89,20 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
     dest = C.norm_path(path) if path else (core.parent / "projects" / name).resolve()
     if dest.exists():
         raise SystemExit(f"kc new-module: {dest} already exists")
+    remote, template_url = C.norm_remote(remote), C.norm_remote(template_url)
+    if remote:
+        check_remote(remote)
     if private and remote:
-        problem = G.private_problem(remote)
-        if problem:
-            raise SystemExit(f"kc new-module: the module is private but {problem}")
+        G.enforce_private(remote, "kc new-module")
 
-    check, source = None, None
+    source = None
     if not no_template:
         source = template_url
         if not source and template:
             t = list_templates(core).get(template)
             if not t:
                 raise SystemExit(f"kc new-module: no template '{template}' (see `kc templates`)")
-            source, check = t.get("source"), t.get("check")
+            source, check = t.get("source"), check or t.get("check")
         if not source:
             raise SystemExit("kc new-module: choose --template NAME, --template-url URL, or --no-template")
 
@@ -134,9 +146,7 @@ def add_module(core, name, path, external=False, private=False, description=None
         raise SystemExit(f"kc add-module: '{name}' is already registered")
     remote = G.origin_url(dest) or None
     if private and remote and not external:
-        problem = G.private_problem(remote)
-        if problem:
-            raise SystemExit(f"kc add-module: the module is private but {problem}")
+        G.enforce_private(remote, "kc add-module")
     reg = C.load_registry(core)
     entry = {"description": description or describe(dest), "remote": remote, "status": "active",
              "private": bool(private)}
