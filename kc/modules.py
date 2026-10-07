@@ -113,6 +113,8 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
         dest.mkdir(parents=True)
         (dest / "AGENTS.md").write_text(BARE_AGENTS.format(name=name), encoding="utf-8", newline="\n")
         (dest / "CLAUDE.md").write_text("@AGENTS.md\n", encoding="utf-8", newline="\n")
+        (dest / ".gitattributes").write_text("* text=auto eol=lf\n*.png binary\n*.jpg binary\n*.pdf binary\n",
+                                             encoding="utf-8", newline="\n")
     G.git(dest, "init", "-q", "-b", G.BRANCH)
     label = template or str(source).rstrip("/").split("/")[-1].removesuffix(".git")
     G.commit_all(dest, f"Start {name}" + (f" from template {label}" if source else ""))
