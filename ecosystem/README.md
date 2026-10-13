@@ -11,7 +11,7 @@ core (ADR 0009).
 | `todo.md` | deferred work: `## Discuss`, `## Dated`, `## Tech` (fielded items raised at session start; headings may be in Russian), `## Candidates` (new module, split, process), `## Repeats` (manual procedures and how often they were done) | the agent |
 | `rules.md` | your own rules for the assistant that hold only in your setup (e.g. which module keeps the calendar); loaded by `CLAUDE.md` after `AGENTS.md` | the agent, when the human sets a rule |
 | `decisions.md` | decisions about the ecosystem (module created, split, frozen; a candidate rejected), newest first | the agent, when the human decides |
-| `instance.yml` | settings shared by your devices: `language`, `timezone` (IANA, e.g. `Europe/Berlin`: the day todo dates are compared with), `review_after_notes`, `review_after_days` | `kc bootstrap`, by hand |
+| `instance.yml` | settings shared by your devices: `language`, `publish` (optional, for `kc publish`: `remote`, `deny`), `timezone` (IANA, e.g. `Europe/Berlin`: the day todo dates are compared with), `review_after_notes`, `review_after_days` | `kc bootstrap`, by hand |
 | `templates.yml` | optional: your own module templates, same format as `config/templates.yml` | by hand |
 | `devices.local.yml` | gitignored: where each module lives on each device | `kc bootstrap`, `kc new-module`, `kc add-module` |
 

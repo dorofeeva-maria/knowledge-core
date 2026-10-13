@@ -80,6 +80,9 @@ become a process — is the agent's, during the session (`AGENTS.md`).
 - **Templates are copies, with owned files refreshed.** `kc new-module --template T` copies the
   template's files into a fresh repo. The files the template owns (catalog `owned`) are later
   refreshed file by file by `kc template-update`; no merge or rebase between repos (ADR 0016).
+- **Publishing the engine (optional).** A core can be the place where the engine itself is
+  developed: `kc publish` copies its engine files into a public engine repo after checking them
+  for personal words (`publish` in `instance.yml`). Nothing flows back into the core.
 
 ## Privacy
 

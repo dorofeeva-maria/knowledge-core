@@ -18,6 +18,9 @@ Run it from the core root: `python3 -m kc …` (on Windows: `python -m kc …`).
   kc template-update T [--module NAME] [--dry-run] [--diff]
                                   refresh the files template T owns in its modules, file by file
   kc template-bind NAME T [--version SHA]   record which template commit a module came from
+  kc publish [--dry-run] [-m MSG] [--remote URL]
+                                  copy the engine files into the public engine repo, checked
+                                  for personal content (publish: in instance.yml)
 """
 import argparse
 import io
@@ -94,6 +97,11 @@ def _parser():
     tb.add_argument("name")
     tb.add_argument("template")
     tb.add_argument("--version", help="the template commit (default: the closest match)")
+
+    pb = sub.add_parser("publish", help="publish the engine files to the public engine repo")
+    pb.add_argument("--dry-run", action="store_true", help="show what would change, commit nothing")
+    pb.add_argument("-m", "--message", help="commit message in the engine repo")
+    pb.add_argument("--remote", help="target repo (default: publish.remote in instance.yml)")
     return p
 
 
@@ -135,6 +143,9 @@ def main(argv):
     if args.cmd == "template-update":
         from . import templates
         return templates.update(core, args.template, args.module, args.dry_run, args.diff)
+    if args.cmd == "publish":
+        from . import publish
+        return publish.run(core, args.remote, args.message, args.dry_run)
     if args.cmd == "template-bind":
         from . import templates
         return templates.bind(core, args.name, args.template, args.version)

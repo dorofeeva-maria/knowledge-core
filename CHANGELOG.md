@@ -19,6 +19,14 @@ decisions behind changes are in `docs/adr/`.
   hold only in their setup, loaded by `CLAUDE.md` after `AGENTS.md`. The engine knows no
   calendar: slots are proposed by the scheduling rules this file points to, else a date is asked.
 
+### Added
+- `kc publish [--dry-run] [-m MSG] [--remote URL]`: for a core where the engine is developed —
+  copies the engine files (`kc/`, `config/`, `docs/`, `AGENTS.md`, `CLAUDE.md`, `README.md`,
+  `CHANGELOG.md`, `.claude/settings.json`, `.gitattributes`, `.gitignore`, `ecosystem/README.md`)
+  into the public engine repo (`publish.remote` in `instance.yml`), deleting engine files gone
+  from the core; refuses uncommitted engine files and any personal word (`publish.deny` regexes,
+  plus registered module names with a `-`); runs `kc --help` in the copy; commits and pushes.
+
 ### Fixed
 - Sync: an `origin` over https and a registry `remote` over SSH (or the other way round) for the
   same repo are the same remote — no more "NOT SYNCED" on a device that clones over https.
