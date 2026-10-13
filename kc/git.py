@@ -139,6 +139,8 @@ def current_branch(path):
 
 
 def same_url(a, b):
+    """Same repo? The protocol doesn't matter: `git@host:me/x.git`, `ssh://git@host/me/x` and
+    `https://host/me/x` are one repo (a device may clone over https, another over SSH)."""
     def norm(u):
         u = str(u or "").strip()
         if u and _is_local_remote(u) and "://" not in u:
@@ -146,6 +148,14 @@ def same_url(a, b):
                 u = str(Path(u).resolve())     # short/long Windows names, relative paths
             except OSError:
                 pass
+        elif u and not u.lower().startswith("file://"):
+            m = re.match(r"^[a-z][a-z0-9+.-]*://(?:[^@/]*@)?([^/:]+)(?::\d+)?/(.*)$", u, re.I)
+            if m:                              # ssh://, https://, git:// with optional user, port
+                u = f"{m.group(1)}/{m.group(2)}"
+            else:
+                m = re.match(r"^(?:[^@/]*@)?([^/:]+):(.*)$", u)
+                if m:                          # scp-like: [user@]host:path
+                    u = f"{m.group(1)}/{m.group(2).lstrip('/')}"
         u = u.replace("\\", "/").rstrip("/")
         return (u[:-4] if u.endswith(".git") else u).lower()
     return norm(a) == norm(b)

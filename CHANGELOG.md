@@ -20,6 +20,8 @@ decisions behind changes are in `docs/adr/`.
   calendar: slots are proposed by the scheduling rules this file points to, else a date is asked.
 
 ### Fixed
+- Sync: an `origin` over https and a registry `remote` over SSH (or the other way round) for the
+  same repo are the same remote — no more "NOT SYNCED" on a device that clones over https.
 - AGENTS.md: inside the markers of a `pull --rebase` conflict, `HEAD` is the other device(s) and
   the replayed commit is this device — it was stated the other way round.
 - Sync re-checks the registry after the pull and never pushes an unreadable one; YAML conflicts
