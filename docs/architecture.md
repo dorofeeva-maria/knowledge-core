@@ -62,7 +62,7 @@ kc reports cheap, unambiguous facts at session start; the agent turns them into 
 - `structure:` — a module grew by `review_after_notes` notes since its last review, or grew and
   `review_after_days` passed (`kc reviewed NAME` resets it);
 - `repeat:` — a manual procedure in `todo.md` reached 3 times;
-- `todo open:` — deferred items.
+- `todo` — todo items to raise today (one row each: due soon or overdue, `after` reached, `when` today or missed, unscheduled discuss, tech for this device), then `ACTION:` rows.
 
 Everything that needs judgment — when a theme deserves its own module, when a procedure should
 become a process — is the agent's, during the session (`AGENTS.md`).
@@ -77,8 +77,9 @@ become a process — is the agent's, during the session (`AGENTS.md`).
   never linked.
 - **Processes are skills.** `.claude/skills/<name>/SKILL.md` inside the module. `kc registry`
   lists them, so the agent in the core can run them.
-- **Templates are copies.** `kc new-module --template T` copies the template's files into a
-  fresh repo; there is no link back.
+- **Templates are copies, with owned files refreshed.** `kc new-module --template T` copies the
+  template's files into a fresh repo. The files the template owns (catalog `owned`) are later
+  refreshed file by file by `kc template-update`; no merge or rebase between repos (ADR 0016).
 
 ## Privacy
 

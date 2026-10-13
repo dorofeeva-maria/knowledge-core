@@ -15,6 +15,9 @@ Run it from the core root: `python3 -m kc …` (on Windows: `python -m kc …`).
   kc sync [-m MSG]                commit leftovers, pull, push: the core + modules on this device
   kc status                       local state of every repo + maintenance signals (no network)
   kc hook start|end               Claude Code hooks: start = sync + signals, end = sync
+  kc template-update T [--module NAME] [--dry-run] [--diff]
+                                  refresh the files template T owns in its modules, file by file
+  kc template-bind NAME T [--version SHA]   record which template commit a module came from
 """
 import argparse
 import io
@@ -80,6 +83,17 @@ def _parser():
 
     h = sub.add_parser("hook", help="assistant hook entry")
     h.add_argument("event", choices=["start", "end"])
+
+    u = sub.add_parser("template-update", help="refresh template-owned files in modules (ADR 0016)")
+    u.add_argument("template")
+    u.add_argument("--module", help="only this module")
+    u.add_argument("--dry-run", action="store_true", help="show what would change, write nothing")
+    u.add_argument("--diff", action="store_true", help="also print the diff of changed files the template doesn't own")
+
+    tb = sub.add_parser("template-bind", help="record which template commit a module came from")
+    tb.add_argument("name")
+    tb.add_argument("template")
+    tb.add_argument("--version", help="the template commit (default: the closest match)")
     return p
 
 
@@ -118,6 +132,12 @@ def main(argv):
     if args.cmd == "reviewed":
         from . import registry
         return registry.mark_reviewed(core, args.name)
+    if args.cmd == "template-update":
+        from . import templates
+        return templates.update(core, args.template, args.module, args.dry_run, args.diff)
+    if args.cmd == "template-bind":
+        from . import templates
+        return templates.bind(core, args.name, args.template, args.version)
     from . import sync
     if args.cmd == "sync":
         return sync.cmd_sync(core, args.message)

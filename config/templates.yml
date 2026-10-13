@@ -1,14 +1,22 @@
 # Default catalog of module templates. Your own go to ecosystem/templates.yml in your core,
 # same format; an entry there overrides one here. `source` is a git URL or a local path; its
-# files are copied into the new module (no link back). `check` is the template's read-only
-# format check, copied into the registry of each module created from it.
+# files are copied into the new module. `check` is the template's read-only format check, copied
+# into the registry of each module created from it. `owned` (fnmatch patterns, `*` crosses `/`):
+# the files the template keeps updating in its modules via `kc template-update` (ADR 0016).
 # See docs/templates.md for how templates are authored.
 templates:
   info:
     source: https://github.com/dorofeeva-maria/template-info.git
     when: A knowledge module — notes and references (entities / concepts / summaries / analyses).
     check: python tools/notes.py check
+    owned:                       # refreshed by `kc template-update` (ADR 0016); the rest is the module's
+      - tools/notes.py
   study:
     source: https://github.com/dorofeeva-maria/template-study.git
     when: One study subject, learned with the learn mastery framework — plan, subtopic hubs, HTML theory artifacts, strand.
     check: python tools/notes.py check
+    owned:
+      - .claude/skills/learn/*
+      - .claude/skills/learn-*/*
+      - artifacts/assets/*
+      - tools/notes.py

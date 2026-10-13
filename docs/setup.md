@@ -3,7 +3,10 @@
 ## Prerequisites
 
 - **git**, **Python 3.9+** and **PyYAML** (`pip install pyyaml`). Commands below say `python3`;
-  on Windows use `python` (there `python3` is often a Microsoft Store stub).
+  on Windows use `python` (there `python3` is often a Microsoft Store stub). On Windows also
+  `pip install tzdata` — without it the `timezone` of instance.yml can't be used.
+- In the core, on every device: `git config merge.conflictStyle zdiff3` (a todo.md conflict
+  then shows the base version).
 - **Claude Code.**
 - **GitHub CLI** (`gh`), logged in (`gh auth login`): `kc` uses it to verify that private repos
   really are private, and it is the easiest way to create them.

@@ -1,7 +1,8 @@
 """Create and register modules: `kc templates`, `kc new-module`, `kc add-module`.
 
-A template is a starting copy: its files are copied into a fresh repo with its own history, and
-the module never hears from the template again (ADR 0015).
+A template is a starting copy: its files are copied into a fresh repo with its own history. The
+files a template owns (its catalog's `owned` patterns) can later be refreshed file by file with
+`kc template-update` (ADR 0016); the module's history is never rebased onto the template.
 """
 import re
 import shutil
@@ -17,7 +18,8 @@ def list_templates(core):
     """Engine defaults (config/templates.yml) overlaid by the core's own (ecosystem/templates.yml)."""
     out = {}
     for f in (core / "config" / "templates.yml", core / "ecosystem" / "templates.yml"):
-        out.update(C.read_yaml(f).get("templates") or {})
+        for name, entry in (C.read_yaml(f).get("templates") or {}).items():
+            out[name] = {**(out.get(name) or {}), **(entry or {})}     # field by field
     return out
 
 
@@ -61,12 +63,15 @@ What this module holds and what goes here — one line, then the rules for worki
 
 
 def _copy_template(source, dest):
+    """Copy the template's files; return the template commit they came from."""
     with tempfile.TemporaryDirectory() as tmp:
         r = subprocess.run(["git", "clone", "--quiet", "--depth", "1", source, tmp],
                            capture_output=True, text=True, encoding="utf-8", errors="replace")
         if r.returncode != 0:
             raise SystemExit(f"kc new-module: cannot fetch template {source}: {G.last(r.stderr)}")
+        sha = G.git(tmp, "rev-parse", "HEAD").stdout.strip()
         shutil.copytree(tmp, dest, ignore=shutil.ignore_patterns(".git"))
+    return sha
 
 
 def check_remote(remote, what="kc new-module"):
@@ -107,8 +112,9 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
             raise SystemExit("kc new-module: choose --template NAME, --template-url URL, or --no-template")
 
     dest.parent.mkdir(parents=True, exist_ok=True)
+    version = None
     if source:
-        _copy_template(source, dest)
+        version = _copy_template(source, dest)
     else:
         dest.mkdir(parents=True)
         (dest / "AGENTS.md").write_text(BARE_AGENTS.format(name=name), encoding="utf-8", newline="\n")
@@ -128,6 +134,8 @@ def new_module(core, name, template=None, template_url=None, no_template=False, 
                  "private": bool(private)}
     if check:
         reg[name]["check"] = check
+    if source and template and not template_url:
+        reg[name]["template"], reg[name]["template_version"] = template, version
     reg[name]["reviewed"] = {"date": None, "notes": count_notes(dest)}
     C.save_registry(core, reg)
     commit_registry(core, f"registry: add module {name}")

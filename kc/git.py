@@ -171,9 +171,10 @@ def _private_notes(path, since):
     return out
 
 
-def sync_own(path, message, frozen=False, remote=None, private=True, budget=None):
+def sync_own(path, message, frozen=False, remote=None, private=True, budget=None, validate=None):
     """Sync one of your repos. `remote`: the registry's URL (origin must match it); `private`:
-    the module's flag; `budget`: a function giving the seconds left for network work.
+    the module's flag; `budget`: a function giving the seconds left for network work;
+    `validate`: a function run after pulling and before pushing — a returned message stops the push.
     Returns (status line, failed?)."""
     if not is_repo(path):
         return "absent", False
@@ -229,6 +230,10 @@ def sync_own(path, message, frozen=False, remote=None, private=True, budget=None
                 return ", ".join(notes + [f"{what} — not pushed, local commits kept; resolve: "
                                           f"git -C \"{path}\" pull --rebase origin {BRANCH}"]), True
             notes.append(f"pulled {behind}")
+    if validate is not None:
+        problem = validate()
+        if problem:
+            return ", ".join(notes + [f"NOT PUSHED: {problem}"]), True
     ahead = ahead_behind(path)[0] if has_main else 1
     if ahead and not frozen:
         if not private:
@@ -245,14 +250,17 @@ def sync_own(path, message, frozen=False, remote=None, private=True, budget=None
     return ", ".join(notes) or "up to date", False
 
 
-def sync_external(path):
-    """Fast-forward a repo that is not yours; never commit or push it."""
+def sync_external(path, budget=None):
+    """Fast-forward a repo that is not yours; never commit or push it. `budget`: as in sync_own."""
     if not is_repo(path):
         return "absent", False
     if conflicted(path) or dirty(path):
         return "skipped (local changes — not ours to commit)", False
+    if budget is not None and budget() < 5:
+        return "not updated: out of time — run `kc sync`", False
+    t = NET_TIMEOUT if budget is None else max(5, min(NET_TIMEOUT, int(budget())))
     before = git(path, "rev-parse", "HEAD").stdout.strip()
-    r = git(path, "pull", "--ff-only", "--quiet", timeout=NET_TIMEOUT)
+    r = git(path, "pull", "--ff-only", "--quiet", timeout=t)
     if r.returncode != 0:
         return f"not updated: {first(r.stderr) or 'pull failed'}", False
     n = git(path, "rev-list", "--count", f"{before}..HEAD").stdout.strip() if before else ""

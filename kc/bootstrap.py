@@ -26,7 +26,19 @@ wrong. Rules that belong to one module go to that module's `AGENTS.md`, not here
 
 Deferred work. One line per item; delete the line when it is done or rejected.
 
-## Tasks
+Item: `- <field>: <value> · <field>: <value> · <text>` — fields first, then free text; a line may
+have no fields. Fields: `due: YYYY-MM-DD` (by this date), `after: YYYY-MM-DD` (not before),
+`when: YYYY-MM-DD` (the agreed day to take it up), `module: <name>` (or `core`),
+`device: mac|windows|linux`, `confirm: yes`, `postponed: N` (only there). Sections: **Discuss** —
+to discuss with the human; **Dated** — date-bound; **Tech** — system chores the assistant does
+(the headings may be in Russian: Обсудить / Сроки / Техническое). kc raises due items one by one
+at session start.
+
+## Discuss
+
+## Dated
+
+## Tech
 
 ## Candidates
 
@@ -34,6 +46,13 @@ Deferred work. One line per item; delete the line when it is done or rejected.
 
 <!-- A manual procedure done more than once: `- 2× · what was done · module · last YYYY-MM-DD`.
      Bump the count each time; at 3× kc raises it at session start. -->
+""",
+    "rules.md": """# Rules of this core
+
+Your own rules for the assistant, on top of the engine's `AGENTS.md` (`CLAUDE.md` loads both).
+Keep here what holds only in your setup — e.g. which module holds the scheduling rules
+("propose slots by the calendar rules of my planning module"). Facts about you go to
+`memory.md`; a rule for one module goes to that module's `AGENTS.md`.
 """,
     "decisions.md": """# Decisions
 

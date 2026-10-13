@@ -41,8 +41,9 @@ def read_yaml(path):
         return {}
     text = path.read_text(encoding="utf-8")
     if re.search(r"^(<<<<<<<|>>>>>>>)", text, re.M):
-        raise SystemExit(f"kc: {path} has unresolved conflict markers — edit it (keep both sides' "
-                         f"entries), then `git add` it and finish with `git rebase --continue`")
+        raise SystemExit(f"kc: {path} has unresolved conflict markers — edit it (merge each entry's "
+                         f"fields into one; never keep a key twice), then `git add` it and finish with "
+                         f"`git rebase --continue`")
     y = yaml()
 
     class Strict(y.SafeLoader):        # a duplicated key is an error, not "last one wins"

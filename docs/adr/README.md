@@ -46,4 +46,5 @@ why it is this way.
 | 0012 memory in plain files | superseded by 0015 |
 | 0013 registry is the map, reconcile asks | accepted, partly superseded by 0015 |
 | 0014 private content, private origin | superseded by 0015 (checked once, not per push) |
-| 0015 simplified architecture | **accepted** |
+| 0015 simplified architecture | **accepted**, amended by 0016 (templates) |
+| 0016 template-owned files updated file by file | **accepted** |

@@ -5,6 +5,28 @@ decisions behind changes are in `docs/adr/`.
 
 ## Unreleased
 
+### Added — template updates, todo items, the core's own rules (2026-10-08 … 2026-10-13)
+- `kc template-update T [--dry-run] [--diff]` and `kc template-bind NAME T [--version SHA]`:
+  the files a template owns (`owned` in the catalog) are refreshed in its modules file by file;
+  a module's own edits are kept ("KEPT LOCAL"), name clashes skipped, no merge or rebase between
+  repos; `template:` signal at session start (ADR 0016).
+- Todo items with fields: sections Discuss / Dated / Tech (headings also in Russian), fields
+  `due`, `after`, `when`, `module`, `device` (`mac`/`windows`/`linux`), `confirm`, `postponed`;
+  the start report raises each item due today, and the agent asks about each with
+  AskUserQuestion before the human's request (AGENTS.md, Todo). The day is taken in `timezone`
+  of `instance.yml`. Broken lines, contradictory dates and conflict markers are flagged.
+- `ecosystem/rules.md` (created by `bootstrap`): the human's own rules for the assistant that
+  hold only in their setup, loaded by `CLAUDE.md` after `AGENTS.md`. The engine knows no
+  calendar: slots are proposed by the scheduling rules this file points to, else a date is asked.
+
+### Fixed
+- AGENTS.md: inside the markers of a `pull --rebase` conflict, `HEAD` is the other device(s) and
+  the replayed commit is this device — it was stated the other way round.
+- Sync re-checks the registry after the pull and never pushes an unreadable one; YAML conflicts
+  are merged per key, never by keeping both copies.
+- The agent never skips the todo poll on its own judgment, only when the human says they are in
+  a hurry.
+
 ### Fixed — findings of the blind and persona tests (2026-10-07)
 - `kc bootstrap` keeps the existing device id and the modules already set up; validates the
   settings file before changing anything; reads typed paths as UTF-8; removes a failed clone.
